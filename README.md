@@ -23,13 +23,34 @@ v1 will be re-scored on the new golden dataset so both versions are compared on 
 
 ## Planned architecture
 
-```
-            ┌──────────── guardrails (PII, injection, scope) ────────────┐
-user ──► API ──► query rewrite ──► router ─┬─► SQL tool ──► Postgres (structured data)
-                                           └─► hybrid search (BM25 + dense) ──► reranker
-                                                        │
-                                       LLM answer with citations ──► output checks ──► stream
-            └──────────── tracing, metrics, cost (Langfuse) ─────────────┘
+```mermaid
+flowchart TB
+    U([Student question]) --> API[FastAPI · auth · rate limit]
+    API --> GI{{Input guardrails<br/>PII masking · prompt injection · scope}}
+    GI --> QR[Query rewriting with chat history]
+    QR --> R{Router}
+
+    R -->|structured| SQL[SQL tool<br/>read-only · validated]
+    R -->|documents| HS[Hybrid search<br/>BM25 + dense]
+    R -->|small talk| LLM
+
+    SQL --> PG[(PostgreSQL<br/>courses · staff · calendar)]
+    HS --> VS[(pgvector / Pinecone)]
+    VS --> RR[Reranker · top 5–8 chunks]
+
+    PG --> LLM[LLM answer with citations]
+    RR --> LLM
+    LLM --> GO{{Output guardrails<br/>groundedness · PII leak}}
+    GO --> OUT([Streamed answer + sources])
+
+    subgraph ING [Ingestion pipeline · offline]
+        direction LR
+        SRC[Department site<br/>PDF · Excel · web] --> P[Parse + clean] --> C[Structure-aware chunking<br/>+ metadata] --> E[Embed]
+    end
+    E --> VS
+    P -->|tables| PG
+
+    OBS[[Langfuse · traces · cost · feedback]] -.- LLM
 ```
 
 | Layer | Choice |
@@ -86,5 +107,4 @@ docs/           roadmap, ADRs, data inventory
 
 ## Author
 
-Mustafa Enes Yeşilyurt — Industrial Engineering, Sakarya University.
-Advisor for the original design project: Dr. Öğr. Üyesi Abdullah Hulusi Kökçam.
+Mustafa Enes Yeşilyurt
