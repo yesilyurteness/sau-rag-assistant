@@ -21,7 +21,7 @@ file name and size and still needs a content review.
 | 8 | Course information packages (`Matematik 1.txt` … `Yapay Zeka.txt`) | TXT | ~82 | vector, linked to `courses` by name | public | 2025-26 | name only | One file per course. Includes `Staj 1`, `Staj 2`, `Bitirme Calismasi`. |
 | 9 | `OgrenciDanismanligi.pdf`, `OgrenciDegisimi.pdf`, `StajSSS.pdf`, `YatayDikeyGecisIntibakKomisyonKarari.pdf` | PDF | 4 | vector, article-aware chunking | public | 2025-26 | name only | Regulations and FAQs. |
 | 10 | `StajBilgilendirmeSunumu1.pdf`, `StajBilgilendirmeSunumu2.pdf`, `2025-2026 Ara Donem Staj Hakkında - Kopya.pdf` | PDF (slides) | 3 | vector, slide-aware parsing | public | 2025-26 | name only | Slide decks need different parsing from regulations. The third file name contains "Kopya" (copy): confirm it is the intended canonical version. |
-| 11 | `MezuniyetKosulları.txt`, `StajSSS.txt`, `OgrenciDegisimi.txt`, `OgrenciDanismanligi.txt` | TXT | 4 | **decide: duplicate or canonical** | public | 2025-11-24 | read (graduation) | Older plain-text copies of PDF content. Keeping both versions will return duplicate chunks. |
+| 11 | `MezuniyetKosulları.txt`, `StajSSS.txt`, `OgrenciDegisimi.txt`, `OgrenciDanismanligi.txt` | TXT | 4 | **decide: duplicate or canonical** | public | 2025-11-24 | read (graduation) | Older plain-text copies of PDF content. Keeping both versions will return duplicate chunks. `MezuniyetKosulları.txt` states 60 internship days, which is wrong (see finding 2): do not ingest as-is. |
 | 12 | `bolumTanıtımı.txt` | TXT | 1 | vector | public | n/a | read | **File is empty (0 bytes).** Upload probably failed. |
 
 ## Findings that change the plan
@@ -32,11 +32,15 @@ file name and size and still needs a content review.
    requirements (`MezuniyetKosulları.txt`). This supports ADR-0001: the bottleneck was
    retrieval, not the knowledge base. Caveat: file dates suggest the graduation file may have
    been added after the v1 test run; this should be verified.
-2. **Conflict to resolve before it enters the golden dataset.** `MezuniyetKosulları.txt` says
-   **60 business days** of internship are required to graduate. The v1 test set records
-   "Staj 1: 20 + Staj 2: 20 = 40 business days". Both cannot be true; the Internship
-   Regulation is the authority. Also, the v1 reference answer for graduation conditions
-   (minimum 2.0 GPA, 240 ECTS) does not appear in `MezuniyetKosulları.txt`; its source is unknown.
+2. **`MezuniyetKosulları.txt` contradicts the Internship Regulation (resolved by owner).**
+   The file says **60 business days** of internship are required to graduate. The correct value
+   is two internships of 20 business days each (40 in total), confirmed by the project owner on
+   2026-11-10. The file is therefore wrong or from an older regulation. **Decision: do not
+   ingest it as-is.** Either correct the sentence in the source file or drop the file. If it is
+   ingested uncorrected, the assistant will give 40 days for "how long is the internship" and
+   60 days for "graduation requirements". The v1 reference answer for graduation conditions
+   (minimum 2.0 GPA, 240 ECTS) does not appear in this file either; its source is unknown, so
+   this question stays out of the golden dataset until a source is found.
 3. **Every source needs an academic year.** Calendar and student counts are stale by
    definition; staff, committees and curriculum may be. Stage 1 adds `academic_year` and
    `valid_from` / `valid_until` to every document and table row, and the assistant states the
@@ -46,16 +50,19 @@ file name and size and still needs a content review.
 5. **Linearized sentences in `DersPlan.csv` carry artifacts**, e.g. `Yapay Zeka ve Üretkenlik ()`
    for a missing course code. This was the v1 approach; v2 queries the table directly with SQL.
 
-## Refresh plan for 2026-2027
+## Data scope decision (2026-11-10)
 
-| Priority | Source | Action |
-|---|---|---|
-| Must | Academic calendar | Collect the 2026-27 calendar from the department / university site |
-| Must | Student and staff counts | Replace, or drop and answer "see department" |
-| High | Department leadership, staff, committees | Verify against the current website |
-| High | Curriculum (`DersPlan`, electives) | Check whether the 2026-27 plan or ECTS values changed |
-| Medium | Internship slides and regulations | Check for 2026-27 versions |
-| Low | Course information packages | Spot-check; likely unchanged |
+The project owner decided to **continue with the 2025-2026 snapshot** and not to integrate the
+assistant with the department website or collect 2026-2027 data for now. The dataset can be
+replaced later if needed. Consequences:
+
+- The assistant must label time-sensitive answers with the source year (for example "according
+  to the 2025-2026 academic calendar"), which is why `academic_year` metadata is in Stage 1.
+- The README and any demo state that the knowledge base is a 2025-2026 snapshot.
+- Golden dataset questions about dates, counts and office holders are written against the
+  snapshot and tagged `snapshot-sensitive`, so they can be re-verified if the data is replaced.
+- Scraping and incremental re-indexing stay in the architecture as a design capability but are
+  not part of the MVP data scope.
 
 ## Column guide
 
