@@ -6,6 +6,7 @@ Checks:
   - every line parses and matches the EvalItem schema
   - ids are unique across all splits
   - no question appears in both dev and test (split leakage)
+  - no group (items about the same fact) spans more than one split
 """
 
 import json
@@ -65,6 +66,17 @@ def validate(directory: Path) -> Report:
     dev = {_normalize(i.question) for i in report.items.get("dev", [])}
     test = {_normalize(i.question) for i in report.items.get("test", [])}
     report.errors += [f"question in both dev and test: {q!r}" for q in sorted(dev & test)]
+
+    splits_by_group: dict[str, set[str]] = {}
+    for split, items in report.items.items():
+        for item in items:
+            if item.group:
+                splits_by_group.setdefault(item.group, set()).add(split)
+    report.errors += [
+        f"group {group!r} spans splits {sorted(splits)}"
+        for group, splits in sorted(splits_by_group.items())
+        if len(splits) > 1
+    ]
     return report
 
 

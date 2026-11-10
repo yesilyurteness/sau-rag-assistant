@@ -64,3 +64,14 @@ def test_detects_duplicate_ids(tmp_path: Path) -> None:
     report = validate(tmp_path)
 
     assert any("duplicate id" in e for e in report.errors)
+
+
+def test_detects_group_spanning_dev_and_test(tmp_path: Path) -> None:
+    dev = {**_item("general-001", "Staj kaç gün?"), "group": "staj-sure"}
+    test = {**_item("general-002", "staj kac gun"), "group": "staj-sure"}
+    _write(tmp_path / "dev.jsonl", [dev])
+    _write(tmp_path / "test.jsonl", [test])
+
+    report = validate(tmp_path)
+
+    assert any("staj-sure" in e and "spans splits" in e for e in report.errors)

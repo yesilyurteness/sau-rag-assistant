@@ -45,6 +45,10 @@ class EvalItem(BaseModel):
     category: Category
     difficulty: Literal["easy", "medium", "hard"] = "medium"
     tags: list[str] = Field(default_factory=list)
+    group: str | None = Field(
+        default=None,
+        description="Items about the same fact share a group; a group never spans dev and test",
+    )
     notes: str | None = None
 
     @model_validator(mode="after")
