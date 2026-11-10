@@ -71,3 +71,33 @@ replaced later if needed. Consequences:
 - **As-of:** academic year or date the content describes.
 
 Raw files stay in Drive and in `data/raw/` locally (git-ignored); never commit source documents.
+
+## Update 2026-11-10 (second pass, after owner review)
+
+Fixed by the owner in the source files: the Spring make-up exam end date (now 5.07.2026), a
+departed staff member removed from `akademikKadro.csv` and `Komisyonlar.csv`, typos in one
+staff name and one e-mail address, the "Kopya" suffix removed from the Ara Dönem internship
+PDF, and `BolumTanitimi.txt` re-uploaded (no longer empty). Confirmed correct: the two
+Three-Course Graduation Exam rows for Spring (16-17.07.2026 and 05.10.2026; the second is
+for students who complete courses in summer school).
+
+New source `StajBilgilendirme.txt` (the Industrial Engineering section of the staj.sabis
+announcement, copied by hand on 2026-11-10; only this section is used, other departments'
+rules contradict it). Notes for ingestion:
+
+- It holds the 2026 summer internship windows and application deadlines. Label answers with
+  the source year; these dates are in the past for the 2025-2026 snapshot.
+- It states that Saturdays count as working days if the company works Saturdays and the
+  student documents it. `StajBilgilendirmeSunumu1.pdf` (2013-14) says the opposite. Prefer
+  the new file; Sunumu1 stays in the corpus only as a conflict test (`staj-cumartesi` group).
+- The form instructions still say "Akademik yıl: 2024-2025" (stale text in the source).
+- It lists the extra-period internship exception: employer with more than 1000 employees, or
+  the student meets the graduation conditions "(240 AKTS, FF DERS YOK, ORT > 2.00, 9 TEKNİK
+  SEÇMELİ ALINMIŞ)". This is the first source found for the v1 "2.0 GPA / 240 ECTS" answer,
+  but it is stated inside the internship exception, not as a general graduation requirement.
+  No graduation-conditions question is added until the owner confirms the rule.
+- Its Ara Dönem section says 3rd and 4th year students; the Ara Dönem PDF also names students
+  with extended study. Minor wording difference, same rule.
+- It contains the staff contact (name, e-mail, phone) of the internship office; these are
+  public department contacts.
+
