@@ -1,23 +1,66 @@
 # Data inventory
 
-Every source the assistant may answer from. Fill one row per source during Stage 0.
-This table drives the ingestion design: structured sources go to SQL tables, unstructured
-ones to the vector index, and the access level becomes a retrieval filter.
+Every source the assistant may answer from. This table drives the ingestion design:
+structured sources go to SQL tables, unstructured ones to the vector index, and the
+access level becomes a retrieval filter.
 
-| # | Source | Type | URL / location | Update frequency | Structured? | Target | Access level | Owner | Status |
-|---|---|---|---|---|---|---|---|---|---|
-| 1 | Example: Staj Yönergesi | PDF | bölüm sitesi / Drive | yearly | no | vector | public | Staj Komisyonu | to collect |
-| 2 | Example: Ders planı | Excel | Drive | per semester | yes | SQL `courses` | public | Bölüm | to collect |
-| 3 | Example: Akademik kadro ve iletişim | web page | bölüm sitesi | per semester | yes | SQL `staff` | public | Bölüm | to collect |
+**Snapshot:** v1 knowledge base, 102 files in Drive (`RAG Project/v1-kaynaklar`), all from
+the **2025-2026 academic year**. Nothing for 2026-2027 has been collected yet.
+**Review depth:** "read" means the content was inspected; "name only" means grouped by
+file name and size and still needs a content review.
 
-**Column guide**
+| # | Source (files) | Type | Count | Target | Access | As-of | Review | Notes |
+|---|---|---|---|---|---|---|---|---|
+| 1 | `DersPlan.csv` | CSV | 1 | SQL `courses` | public | 2025-26 | read | Semester, code, name, type, T+U, credit, ECTS. Elective slots have no course code. Four identical `MF-Teknik Seçmeli` rows per semester. |
+| 2 | `seçmeliDersler.csv` | CSV | 1 | SQL `elective_courses` | public | 2025-26 | name only | |
+| 3 | `akademikKadro.csv` | CSV | 1 | SQL `staff` | public | 2025-26 | name only | Names, titles, work e-mail addresses (public on the department site). |
+| 4 | `BolumYonetimi.csv` | CSV | 1 | SQL `staff` (role column) | public | 2025-26 | read | Chair and two vice chairs. Roles can change. |
+| 5 | `Komisyonlar.csv` | CSV | 1 | SQL `committees`, `committee_members` | public | 2025-26 | name only | 24 KB, largest structured file. |
+| 6 | `25-26AkademikTakvim.csv` | CSV | 1 | SQL `academic_calendar` | public | 2025-26 | name only | **Outdated: must be replaced with the 2026-27 calendar.** |
+| 7 | `ogrenciSayilari.csv`, `personelSayısı.csv` | CSV | 2 | SQL `department_stats` | public | 2025-26 | read (students) | Student counts are per program (1st, 2nd, distance), so "how many students" needs a sum (626 + 363 + 11 = 1000). Numbers change every year. |
+| 8 | Course information packages (`Matematik 1.txt` … `Yapay Zeka.txt`) | TXT | ~82 | vector, linked to `courses` by name | public | 2025-26 | name only | One file per course. Includes `Staj 1`, `Staj 2`, `Bitirme Calismasi`. |
+| 9 | `OgrenciDanismanligi.pdf`, `OgrenciDegisimi.pdf`, `StajSSS.pdf`, `YatayDikeyGecisIntibakKomisyonKarari.pdf` | PDF | 4 | vector, article-aware chunking | public | 2025-26 | name only | Regulations and FAQs. |
+| 10 | `StajBilgilendirmeSunumu1.pdf`, `StajBilgilendirmeSunumu2.pdf`, `2025-2026 Ara Donem Staj Hakkında - Kopya.pdf` | PDF (slides) | 3 | vector, slide-aware parsing | public | 2025-26 | name only | Slide decks need different parsing from regulations. The third file name contains "Kopya" (copy): confirm it is the intended canonical version. |
+| 11 | `MezuniyetKosulları.txt`, `StajSSS.txt`, `OgrenciDegisimi.txt`, `OgrenciDanismanligi.txt` | TXT | 4 | **decide: duplicate or canonical** | public | 2025-11-24 | read (graduation) | Older plain-text copies of PDF content. Keeping both versions will return duplicate chunks. |
+| 12 | `bolumTanıtımı.txt` | TXT | 1 | vector | public | n/a | read | **File is empty (0 bytes).** Upload probably failed. |
 
-- **Type:** PDF, Excel/CSV, web page, TXT, announcement.
-- **Structured?:** yes if the content is naturally rows and columns (courses, ECTS, staff,
-  committees, calendar dates). These are answered with exact SQL lookups, not embeddings.
+## Findings that change the plan
+
+1. **v1 retrieval failures were not missing data.** The answers to all four failed v1 questions
+   exist in the sources: department chair (`BolumYonetimi.csv`), student count
+   (`ogrenciSayilari.csv`, by summation), Yöneylem 2 semester (`DersPlan.csv`), graduation
+   requirements (`MezuniyetKosulları.txt`). This supports ADR-0001: the bottleneck was
+   retrieval, not the knowledge base. Caveat: file dates suggest the graduation file may have
+   been added after the v1 test run; this should be verified.
+2. **Conflict to resolve before it enters the golden dataset.** `MezuniyetKosulları.txt` says
+   **60 business days** of internship are required to graduate. The v1 test set records
+   "Staj 1: 20 + Staj 2: 20 = 40 business days". Both cannot be true; the Internship
+   Regulation is the authority. Also, the v1 reference answer for graduation conditions
+   (minimum 2.0 GPA, 240 ECTS) does not appear in `MezuniyetKosulları.txt`; its source is unknown.
+3. **Every source needs an academic year.** Calendar and student counts are stale by
+   definition; staff, committees and curriculum may be. Stage 1 adds `academic_year` and
+   `valid_from` / `valid_until` to every document and table row, and the assistant states the
+   document date it answered from.
+4. **Duplicate and dirty inputs.** Duplicate elective rows (#1), TXT/PDF twins (#11), an empty
+   file (#12). The ingestion pipeline must deduplicate and validate non-empty content.
+5. **Linearized sentences in `DersPlan.csv` carry artifacts**, e.g. `Yapay Zeka ve Üretkenlik ()`
+   for a missing course code. This was the v1 approach; v2 queries the table directly with SQL.
+
+## Refresh plan for 2026-2027
+
+| Priority | Source | Action |
+|---|---|---|
+| Must | Academic calendar | Collect the 2026-27 calendar from the department / university site |
+| Must | Student and staff counts | Replace, or drop and answer "see department" |
+| High | Department leadership, staff, committees | Verify against the current website |
+| High | Curriculum (`DersPlan`, electives) | Check whether the 2026-27 plan or ECTS values changed |
+| Medium | Internship slides and regulations | Check for 2026-27 versions |
+| Low | Course information packages | Spot-check; likely unchanged |
+
+## Column guide
+
 - **Target:** `vector`, or the SQL table name.
-- **Access level:** `public`, `student`, `staff`. Used for role-based retrieval filters later.
-- **Status:** to collect, collected, parsed, indexed.
+- **Access:** `public`, `student`, `staff`; used for role-based retrieval filters later.
+- **As-of:** academic year or date the content describes.
 
-Raw files go to `data/raw/` locally (git-ignored); never commit source documents that are
-not public.
+Raw files stay in Drive and in `data/raw/` locally (git-ignored); never commit source documents.

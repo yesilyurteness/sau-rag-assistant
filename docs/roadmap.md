@@ -17,7 +17,7 @@ The full roadmap (Turkish) lives in the project's planning document. Summary:
 - [x] CI: lint, types, tests, integration tests, secret and dependency scan, Docker build
 - [x] Golden dataset schema and validator
 - [x] ADR-0001
-- [ ] Data inventory filled in (`docs/data-inventory.md`)
+- [x] Data inventory first draft (`docs/data-inventory.md`); content review of remaining files pending
 - [ ] Golden dataset v0: 50 items in `evals/datasets/dev.jsonl`
 - [ ] Accounts and API keys (provider spending limits set)
 
