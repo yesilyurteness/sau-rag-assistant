@@ -101,26 +101,3 @@ rules contradict it). Notes for ingestion:
 - It contains the staff contact (name, e-mail, phone) of the internship office; these are
   public department contacts.
 
-
-## Update 2026-11-11 (ingestion, Stage 1 step 1)
-
-- `MezuniyetKosulları.txt` was deleted from Drive by the owner. It is also listed as `skip` in
-  `config/sources.toml`, so it cannot return by accident.
-- Graduation requirement confirmed by the owner: 240 ECTS and a GPA above 2.00. "No FF grade" and
-  "9 technical electives" appear only in `StajBilgilendirme.txt` and are not confirmed.
-- The TXT twins of `StajSSS`, `OgrenciDegisimi` and `OgrenciDanismanligi` are `skip` in the manifest;
-  the ingestion only scans the top level of the folder, so an `arsiv/` sub-folder is ignored.
-- Every file now has a kind, academic year and status in `config/sources.toml`. Non-default values:
-  `StajBilgilendirmeSunumu1.pdf` 2013-2014 superseded; `StajBilgilendirmeSunumu2.pdf` 2023-2024
-  superseded (pending owner confirmation, see below); `YatayDikeyGecisIntibakKomisyonKarari.pdf`
-  2015-2016 current (decision of 04.01.2016).
-- New conflict found in `StajBilgilendirmeSunumu2.pdf` (07.11.2023): slide 5 says "(Cumartesi iş günü
-  sayılmamaktadır)", slide 2 names the committee chair by her former surname, slide 11 says there is no
-  interim internship "this year". All three contradict 2025-2026 sources, so the deck is marked
-  superseded by default.
-- `2025-2026 Ara Donem Staj Hakkında.pdf`: the committee-member table on page 6 has empty cells in the
-  text layer (names are not extractable); committee facts come from SQL.
-- `StajBilgilendirmeSunumu1.pdf`: the broken encoding (`Ġ`/`ġ`/`Ģ`) is repaired on load
-  (150 characters across the deck).
-- Course packages: each file holds every EBS page twice (pipe-table copy and flat copy). The flat copy is
-  removed after reading the academic year `(2025 - 2026)` and the EBS course id from it.

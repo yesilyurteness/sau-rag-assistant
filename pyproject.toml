@@ -14,8 +14,6 @@ dependencies = [
     "asyncpg>=0.30",
     "redis>=5.2",
     "structlog>=24.4",
-    "pdfplumber>=0.11.10",
-    "alembic>=1.20.1",
 ]
 
 [dependency-groups]
@@ -26,7 +24,6 @@ dev = [
     "ruff>=0.8",
     "mypy>=1.13",
     "pre-commit>=4.0",
-    "pytest-asyncio>=1.4.1.post1",
 ]
 
 [build-system]
@@ -40,7 +37,7 @@ packages = ["src/app"]
 [tool.ruff]
 line-length = 100
 target-version = "py312"
-src = ["src", "tests", "evals", "migrations"]
+src = ["src", "tests", "evals"]
 
 [tool.ruff.lint]
 select = [
@@ -71,15 +68,13 @@ python_version = "3.12"
 strict = true
 plugins = ["pydantic.mypy"]
 mypy_path = "src"
-files = ["src/app", "evals", "migrations"]
+packages = ["app", "evals"]
 
 # ---------------------------------------------------------------- pytest
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src", "."]
 addopts = "-ra --strict-markers"
-asyncio_mode = "auto"
-asyncio_default_fixture_loop_scope = "function"
 markers = [
     "integration: needs running services (postgres, redis)",
 ]

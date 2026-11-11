@@ -1,5 +1,3 @@
-"""Document ingestion: manifest, loaders, cleaning, structure-aware chunking, quality report.
+"""Document ingestion: loaders, parsers, structure-aware chunking, metadata, incremental indexing.
 
-Run with `python -m app.ingestion --source-dir <folder>`.
-Design: docs/design/stage1-step1-ingestion.md.
-"""
+Implemented in a later stage, see docs/roadmap.md."""

@@ -1,7 +1,6 @@
 # Stage 1 plan: working MVP with a live URL
 
-Status: approved 2026-11-11. Time box: 3-4 weeks. Step 1 (ingestion) implemented, see
-`docs/design/stage1-step1-ingestion.md` and ADR-0002.
+Status: proposed, waiting for owner approval. Time box: 3-4 weeks.
 
 ## Exit criteria
 
