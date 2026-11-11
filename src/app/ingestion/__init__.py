@@ -1,3 +1,3 @@
-"""Document ingestion: loaders, parsers, structure-aware chunking, metadata, incremental indexing.
+"""Document ingestion: loaders, text cleanup, chunking and indexing.
 
-Implemented in a later stage, see docs/roadmap.md."""
+Built step by step in Stage 1, see docs/stage1-plan.md."""
