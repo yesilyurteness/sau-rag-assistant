@@ -109,7 +109,7 @@ rules contradict it). Notes for ingestion:
   longer part of the corpus and must not be re-added. The other three TXT twins (`StajSSS`,
   `OgrenciDegisimi`, `OgrenciDanismanligi`) are still to be moved to an `arsiv` subfolder.
 - The owner confirmed the graduation rule: **240 ECTS completed and a GPA above 2.00**. This
-  is now the verified source for the golden-set question `bb702c0` and replaces the
+  is now the verified source for the graduation-conditions golden-set question (added in commit `bb702c0`) and replaces the
   "until the owner confirms" note above.
 - Not confirmed by the owner: "no FF grades" and "9 technical electives". They appear only in
   `StajBilgilendirme.txt` (extra-period internship exception), so they are not stated as
