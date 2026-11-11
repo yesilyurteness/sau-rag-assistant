@@ -1,0 +1,87 @@
+
+1/
+
+ | 
+
+Ders Adı | Kodu | Yarıyıl | T+U Saat | Kredi | AKTS
+Örnek Planlama | ENM 999 | 5 | 4 + 0 | 4 | 5
+
+Ön Koşul Dersleri | 
+Önerilen Seçmeli Dersler | 
+Dersin Dili | Türkçe
+Dersin Seviyesi | Lisans
+Dersin Türü | Zorunlu
+Dersin Koordinatörü | Doç.Dr. ÖRNEK KOORDİNATÖR
+Dersi Verenler | Doç.Dr. ÖRNEK KOORDİNATÖR,Dr.Öğr.Üyesi DENEME
+HOCA,
+Dersin Yardımcıları | 
+Dersin Kategorisi | Diğer
+Dersin Amacı | Öğrencilere örnek planlama yöntemlerini tanıtmak ve bu yöntemleri küçük
+problemlerde uygulatmaktır.
+Dersin İçeriği | Talep tahmini, kapasite planlama ve çizelgeleme.
+
+# | Ders Öğrenme Çıktıları | Öğretim Yöntemleri | Ölçme Yöntemleri
+1 | Talep tahmin yöntemlerini
+açıklayabilir. | Anlatım, Soru-Cevap,
+Tartışma, | Yazılı Sınavlar (Kısa ve
+Uzun Yanıtlı),
+2 | Kapasite planı hazırlayabilir. | Anlatım, | Ödev,
+
+Hafta | Ders Konuları | Ön Hazırlık
+1 | Derse giriş | 
+2 | Talep tahmini | Okuma: bölüm 1
+3 | Kapasite planlama | 
+
+30.11.2025 16:02 Eğitim Bilgi Sistemi
+
+Eğitim Bilgi Sistemi Endüstri Mühendisliği Bölümü Örnek Planlama (2025 - 2026)
+  
+Ders Adı Kodu Yarıyıl T+U Saat Kredi AKTS
+Örnek Planlama ENM 999 5 4 + 0 4 5
+Hafta Ders Konuları Ön Hazırlık
+1 Derse giriş
+https://ebs.sakarya.edu.tr/Ders/Detay/123456?dil=tr&yazdir=true 1/3
+Hafta | Ders Konuları | Ön Hazırlık
+4 | Çizelgeleme | 
+Kaynaklar | 
+Ders Notu | Örnek ders notları
+Ders Kaynakları | Örnek Yazar, "Planlama", Örnek Yayınevi, 2020.
+
+| | 2/ | 
+
+Sıra | Program Çıktıları | Katkı Düzeyi | | | | 
+| | 1 | 2 | 3 | 4 | 5
+1 a | Matematik ve fen bilgisi birikimi; | | | | | 
+3 | Karmaşık bir sistemi tasarlama
+becerisi. | | | X | | 
+10
+a | Proje yönetimi hakkında bilgi; | | | | X | 
+
+Değerlendirme Sistemi | 
+Yarıyıl Çalışmaları | Katkı Oranı
+1. Ara Sınav | 100
+Toplam | 100
+1. Yıl İçinin Başarıya | 50
+1. Final | 50
+Toplam | 100
+
+AKTS - İş Yükü Etkinlik | Sayı | Süre (Saat) | Toplam İş Yükü (Saat)
+Ders Süresi (Sınav haftası dahildir: 16x toplam ders saati) | 16 | 4 | 64
+
+30.11.2025 16:02 Eğitim Bilgi Sistemi
+Kaynaklar
+Ders Notu Örnek ders notları
+https://ebs.sakarya.edu.tr/Ders/Detay/123456?dil=tr&yazdir=true 2/3
+AKTS - İş Yükü Etkinlik | Sayı | Süre (Saat) | Toplam İş Yükü (Saat)
+Sınıf Dışı Ders Çalışma Süresi(Ön çalışma, pekiştirme) | 16 | 5 | 80
+Final | 1 | 8 | 8
+Toplam İş Yükü | | | 152
+Toplam İş Yükü / 25 (Saat) | | | 6,08
+dersAKTSKredisi | | | 5
+
+3/
+
+30.11.2025 16:02 Eğitim Bilgi Sistemi
+Toplam İş Yükü 152
+dersAKTSKredisi 5
+https://ebs.sakarya.edu.tr/Ders/Detay/123456?dil=tr&yazdir=true 3/3

@@ -1,0 +1,145 @@
+# Source manifest for the ingestion pipeline (see docs/design/stage1-step1-ingestion.md).
+#
+# Only files listed here (or matched by a [[pattern]]) are ingested. Everything else in the source
+# folder is reported as "unregistered" and ignored. This file holds metadata only, never content.
+#
+# Fields: name | kind | title | academic_year | status | access | valid_from | valid_until | skip | notes
+# kind:   course_package | faq | decisions | procedure | narrative | announcement | slides | tabular
+# status: current | superseded   (superseded documents stay searchable but rank below current ones)
+
+[defaults]
+academic_year = "2025-2026"  # the 2025-2026 snapshot (data-scope decision of 2026-11-10)
+status = "current"
+access = "public"
+
+# --- Structured data: registered here, loaded into SQL tables in step 2 (no vector chunks) -------------
+
+[[source]]
+name = "DersPlan.csv"
+kind = "tabular"
+title = "Ders planı"
+
+[[source]]
+name = "seçmeliDersler.csv"
+kind = "tabular"
+title = "Seçmeli dersler"
+
+[[source]]
+name = "akademikKadro.csv"
+kind = "tabular"
+title = "Akademik kadro"
+
+[[source]]
+name = "BolumYonetimi.csv"
+kind = "tabular"
+title = "Bölüm yönetimi"
+
+[[source]]
+name = "Komisyonlar.csv"
+kind = "tabular"
+title = "Komisyonlar"
+
+[[source]]
+name = "25-26AkademikTakvim.csv"
+kind = "tabular"
+title = "2025-2026 akademik takvim"
+
+[[source]]
+name = "ogrenciSayilari.csv"
+kind = "tabular"
+title = "Öğrenci sayıları"
+
+[[source]]
+name = "personelSayısı.csv"
+kind = "tabular"
+title = "Personel sayısı"
+
+# --- Regulations, FAQs and announcements (PDF is preferred over the TXT twin) -------------------------------
+
+[[source]]
+name = "StajSSS.pdf"
+kind = "faq"
+title = "Staj işlemleri hakkında sık sorulan sorular"
+
+[[source]]
+name = "OgrenciDanismanligi.pdf"
+kind = "narrative"
+title = "Öğrenci danışmanlığı"
+
+[[source]]
+name = "OgrenciDegisimi.pdf"
+kind = "narrative"
+title = "Öğrenci değişimi (Erasmus ve Mevlana)"
+
+[[source]]
+name = "YatayDikeyGecisIntibakKomisyonKarari.pdf"
+kind = "decisions"
+title = "Yatay ve dikey geçiş, ÇAP intibak komisyonu kararı (04.01.2016)"
+academic_year = "2015-2016"
+valid_from = 2016-01-04
+notes = "Decision of 2016-01-04, assumed still in force (status current). Owner to confirm."
+
+[[source]]
+name = "2025-2026 Ara Donem Staj Hakkında.pdf"
+kind = "procedure"
+title = "2025-2026 ara dönem staj başvuruları"
+
+[[source]]
+name = "StajBilgilendirme.txt"
+kind = "announcement"
+title = "Endüstri Mühendisliği staj duyurusu (staj.sabis)"
+notes = "Hand-copied Industrial Engineering section. Its form instructions still say 'Akademik yıl: 2024-2025'."
+
+[[source]]
+name = "BolumTanitimi.txt"
+kind = "narrative"
+title = "Bölüm tanıtımı"
+notes = "Undated; the snapshot year is assumed."
+
+# --- Slide decks ------------------------------------------------------------------------------------------
+
+[[source]]
+name = "StajBilgilendirmeSunumu1.pdf"
+kind = "slides"
+title = "Staj bilgilendirme sunumu (2013-2014)"
+academic_year = "2013-2014"
+status = "superseded"
+notes = "Kept as the conflict test for the Saturday rule. Broken font encoding, repaired on load."
+
+[[source]]
+name = "StajBilgilendirmeSunumu2.pdf"
+kind = "slides"
+title = "Staj bilgilendirme toplantısı sunumu (07.11.2023)"
+academic_year = "2023-2024"
+status = "superseded"
+notes = "Conflicts with current sources: says Saturdays are not working days, names the committee chair by her former surname, and says there is no interim internship 'this year' (2023). Superseded pending owner confirmation."
+
+# --- Files that must never be ingested ---------------------------------------------------------------------
+
+[[source]]
+name = "MezuniyetKosulları.txt"
+kind = "narrative"
+skip = "Deleted by the owner: states 60 internship days, the correct value is 40."
+
+[[source]]
+name = "StajSSS.txt"
+kind = "faq"
+skip = "TXT twin of StajSSS.pdf; the PDF is used."
+
+[[source]]
+name = "OgrenciDegisimi.txt"
+kind = "narrative"
+skip = "TXT twin of OgrenciDegisimi.pdf; the PDF is used."
+
+[[source]]
+name = "OgrenciDanismanligi.txt"
+kind = "narrative"
+skip = "TXT twin of OgrenciDanismanligi.pdf; the PDF is used."
+
+# --- Pattern rules (an exact [[source]] entry always wins) -------------------------------------------------
+
+[[pattern]]
+glob = "*.txt"
+kind = "course_package"
+# Course information packages: one file per course, e.g. "Matematik 1.txt". A .txt file that does not
+# parse as a course package is skipped with an error in the report instead of being indexed as noise.

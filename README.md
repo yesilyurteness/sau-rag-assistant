@@ -86,6 +86,9 @@ or point `DATABASE_URL` / `REDIS_URL` elsewhere). Interactive docs: http://local
 | `make test-all` | includes integration tests against real Postgres/Redis |
 | `make format` | auto-fix and format |
 | `make validate-evals` | validate the golden evaluation dataset |
+| `make migrate` | apply database migrations (Alembic) |
+| `make ingest-dry-run` | process `data/raw/v1-kaynaklar` and write a report to `data/processed/reports/`, no database |
+| `make ingest` | migrate, ingest into Postgres (idempotent), write the report |
 
 ## Repository layout
 
