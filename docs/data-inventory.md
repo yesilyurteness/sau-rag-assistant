@@ -101,3 +101,16 @@ rules contradict it). Notes for ingestion:
 - It contains the staff contact (name, e-mail, phone) of the internship office; these are
   public department contacts.
 
+
+## Update 2026-11-11 (graduation file removed, graduation rule confirmed)
+
+- The owner deleted `MezuniyetKosulları.txt` from the Drive source folder (it stated 60
+  internship days, which is wrong). Table row 11 above is kept as history; the file is no
+  longer part of the corpus and must not be re-added. The other three TXT twins (`StajSSS`,
+  `OgrenciDegisimi`, `OgrenciDanismanligi`) are still to be moved to an `arsiv` subfolder.
+- The owner confirmed the graduation rule: **240 ECTS completed and a GPA above 2.00**. This
+  is now the verified source for the golden-set question `bb702c0` and replaces the
+  "until the owner confirms" note above.
+- Not confirmed by the owner: "no FF grades" and "9 technical electives". They appear only in
+  `StajBilgilendirme.txt` (extra-period internship exception), so they are not stated as
+  general graduation rules.
