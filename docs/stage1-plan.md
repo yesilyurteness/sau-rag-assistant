@@ -58,3 +58,20 @@ Order matters: the eval runner (3) comes before any tuning (4, 5) so each later 
 1. Approval of this plan and of excluding `MezuniyetKosulları.txt`.
 2. Before step 7: a hosting choice and monthly budget (free options exist, with limits).
 3. After step 1: a short review of the ingestion report, especially the course packages.
+
+## Working agreement and checkpoints
+
+Each step above is delivered in sub-steps. After every sub-step the work stops, is explained in plain
+language (what, why, how, test result) and waits for the owner's approval; see `CLAUDE.md`.
+
+Step 1 sub-steps:
+
+| Sub-step | Scope |
+|---|---|
+| 1a | Loaders for TXT, PDF and CSV, text cleanup, unit tests |
+| 1b | Database schema (`documents`, `chunks`, academic year, `status`) and migration |
+| 1c | Chunking strategy and ADR-0002 |
+| 1d | Idempotent ingestion command and the ingestion report |
+
+The sub-steps of steps 2-7 are written and shown to the owner before each of those steps starts.
+
