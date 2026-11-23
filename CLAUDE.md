@@ -3,6 +3,8 @@
 RAG assistant for Sakarya University Industrial Engineering students. Owner: Mustafa Enes
 Yeşilyurt. Roadmap: `docs/roadmap.md`. Decisions: `docs/adr/`.
 
+Read `docs/project-context.md` first: current position, confirmed facts and open items.
+
 ## Working rules
 
 - Run `make check` before committing; it must pass (ruff, mypy strict, unit tests, dataset validation).

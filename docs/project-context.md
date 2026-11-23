@@ -1,0 +1,109 @@
+# Project context
+
+Read this before starting work. It holds the state and facts that are not obvious from the
+code. Rules for how to work are in `CLAUDE.md`; the full plan is in `docs/stage1-plan.md`.
+Update the "Current position" and "Open items" sections when a step is finished.
+
+## What this is
+
+A source-cited RAG assistant for Sakarya University Industrial Engineering students
+(internship rules, course information packages, exam regulations, academic calendar, staff
+and committees). It answers only from its sources and refuses when no source supports an
+answer. v2 is a production-grade Python rewrite of the owner's graduation project and a
+portfolio piece.
+
+v1 (n8n + Gemini 2.5 Flash + Supabase pgvector) on 15 questions: BERTScore F1 0.6475,
+BLEU 0.153, ROUGE-L 0.296, mean latency 6.12 s. 4/15 answers failed on retrieval and at
+least 2 were wrong (for example "Statistics 1 is 6 ECTS"; it is 5). In all 4 failures the
+answer was in the source files, so the bottleneck was ingestion and retrieval, not the LLM
+(see ADR-0001).
+
+## Stack
+
+Python 3.12, uv, FastAPI, Pydantic v2, pydantic-settings, structlog, SQLAlchemy async,
+PostgreSQL 16 + pgvector, Redis, Docker Compose, GitHub Actions, Langfuse. LangChain only
+at the edges. LLM, embedding and reranker sit behind provider-agnostic interfaces; the
+provider is chosen by configuration.
+
+## Stages
+
+- Stage 0, preparation: done (2026-11-11).
+- Stage 1, MVP with a live URL: in progress, plan approved. Steps: (1) ingestion,
+  (2) structured data / SQL tools, (3) eval runner + dense baseline, (4) hybrid search +
+  reranker, (5) generation and routing, (6) API + Streamlit UI, (7) deployment.
+- Stage 2 production quality, Stage 3 scale (multi-tenancy, RBAC, MCP), Stage 4 pilot.
+
+## Current position (2026-11-23)
+
+- An earlier one-shot draft of the whole ingestion step (a446163) was reverted (8ba1b29)
+  because it was too large to review. It stays in history for reference only.
+- Step 1a-1 done (1358f38): `LoadedDocument`/`Segment` model, `clean_text`, TXT loader
+  (UTF-8, cp1254 fallback with a warning), unit tests.
+- Claude Code is denied access to `.env` by `.claude/settings.json` (7e57e38).
+- Next: step 1a-2 (PDF loader). Show its split before coding and wait for approval.
+
+## Data
+
+Source files are a 2025-2026 snapshot kept outside the repo (raw documents are never
+committed). Details and known source problems: `docs/data-inventory.md`.
+
+Facts confirmed by the owner (use these when sources disagree):
+
+- Internship: two internships of 20 working days, 40 working days in total. Saturdays count
+  as working days if the company works Saturdays and the student documents it (source:
+  `StajBilgilendirme.txt`). `StajBilgilendirmeSunumu1.pdf` (2013-14) says the opposite; it
+  is kept with status `superseded` as a conflict test.
+- Graduation: 240 ECTS and a GPA above 2.00. "No FF grades" and "9 technical electives"
+  appear only inside the extra-period internship exception and are not confirmed as general
+  graduation rules.
+- Internship Committee chair: Assoc. Prof. Seher Polat (an older presentation uses an
+  earlier surname).
+- Statistics and Probability 1 (ENM 205): 5 ECTS. The course package also shows a workload
+  of 6.08, which is not the ECTS value.
+- Three-Course Graduation Exam: two Spring dates, 16-17.07.2026 and 05.10.2026; both are
+  correct.
+- `MezuniyetKosulları.txt` is deleted and must not be used (it says 60 internship days).
+- PDF/TXT twins (`StajSSS`, `OgrenciDegisimi`, `OgrenciDanismanligi`): ingest the PDF only.
+
+Scope: no department-website integration and no 2026-27 data collection. Time-sensitive
+answers state the source year.
+
+## Evaluation
+
+Golden set v0 in `evals/datasets/`: 55 owner-verified items (39 dev, 16 test). Items about
+the same fact share a `group` and stay in one split; the validator checks this. Behaviours
+are answer, refuse and clarify. `test.jsonl` is used only for release reports, never for
+tuning.
+
+## Services
+
+Accounts are set up; keys live only in the owner's local `.env`, never in chat or git.
+
+- Hugging Face: fine-grained token, private dataset `yesilyurtenes/sau-ie-rag-golden-set`.
+- Langfuse Cloud (EU, Hobby plan, 30-day retention): only synthetic eval data is sent.
+- Cohere (trial, 1,000 calls/month, 10 rerank requests/minute): comparison only, not for
+  production. The default reranker is local `bge-reranker-v2-m3`; an empty
+  `COHERE_API_KEY` must not crash the app.
+- Gemini free tier: development only (Google may use submitted data). OpenAI and Anthropic
+  keys will be added when needed.
+- Connection checks: `scripts/check_hf.py`, `scripts/check_langfuse.py`,
+  `scripts/check_cohere.py`.
+
+## Key decisions
+
+- Every technique must fix a measured problem; measure before and after.
+- Structured data (ECTS, staff, committees, calendar) comes from SQL through parameterized
+  query functions with a read-only role; no free text-to-SQL.
+- No source, no answer: refusing is correct when sources are weak.
+- Every document and chunk carries academic year and status (`current` / `superseded`).
+- Eval runners use retry/backoff and caching because of free-tier rate limits.
+- The live demo warns users not to enter personal data.
+
+## Open items
+
+- Owner: move the TXT twins to an `arsiv` subfolder; review the ingestion report after
+  step 1; decide hosting and budget before step 7.
+- Engineering: CI Node 20 action warnings and a starlette/httpx test warning; check the
+  Langfuse SDK host variable name (`LANGFUSE_BASE_URL` vs `LANGFUSE_HOST`); upload the
+  golden set to the HF dataset together with the eval runner; keep eval reports in
+  `evals/reports/`.
