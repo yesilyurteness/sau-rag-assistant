@@ -52,6 +52,7 @@ select = [
     "BLE",      # blind except
     "SIM",      # simplify
     "RUF",
+    "PLE251",   # unescaped control / zero-width characters in strings
 ]
 
 # Turkish text (ı, İ, ş, ğ) is expected in data, comments and tests.
