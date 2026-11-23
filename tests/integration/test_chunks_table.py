@@ -15,12 +15,12 @@ from tests.integration.conftest import run_in_rolled_back_transaction
 pytestmark = pytest.mark.integration
 
 INSERT_DOCUMENT = text(
-    "INSERT INTO documents (source_name, file_type, academic_year, status, content_hash) "
-    "VALUES (:name, 'pdf', '2025-2026', 'current', :hash) RETURNING id"
+    "INSERT INTO documents (source_name, file_type, kind, academic_year, status, content_hash) "
+    "VALUES (:name, 'pdf', 'faq', '2025-2026', 'current', :hash) RETURNING id"
 )
 INSERT_CHUNK = text(
-    "INSERT INTO chunks (document_id, position, text, page) "
-    "VALUES (:document_id, :position, :text, :page) RETURNING id, created_at"
+    "INSERT INTO chunks (document_id, position, text, page, section) "
+    "VALUES (:document_id, :position, :text, :page, :section) RETURNING id, created_at, section"
 )
 COUNT_CHUNKS = text("SELECT count(*) FROM chunks WHERE document_id = :document_id")
 
@@ -36,8 +36,15 @@ async def _add_chunk(
     position: int = 0,
     chunk_text: str = "Staj 20 iş günüdür.",
     page: int | None = 1,
+    section: str | None = None,
 ) -> Any:
-    values = {"document_id": document_id, "position": position, "text": chunk_text, "page": page}
+    values = {
+        "document_id": document_id,
+        "position": position,
+        "text": chunk_text,
+        "page": page,
+        "section": section,
+    }
     return (await connection.execute(INSERT_CHUNK, values)).one()
 
 
@@ -74,8 +81,16 @@ def test_chunks_are_stored_with_and_without_a_page(migrated_database_url: str) -
         ({"position": -1}, "ck_chunks_position"),
         ({"position": 0}, "uq_chunks_document_id_position"),
         ({"position": 1, "document_id": 999_999_999}, "fk_chunks_document_id_documents"),
+        ({"position": 1, "section": ""}, "ck_chunks_section_not_empty"),
     ],
-    ids=["empty-text", "page-0", "negative-position", "duplicate-position", "no-document"],
+    ids=[
+        "empty-text",
+        "page-0",
+        "negative-position",
+        "duplicate-position",
+        "no-document",
+        "empty-section",
+    ],
 )
 def test_invalid_chunk_is_rejected(
     migrated_database_url: str, chunk: dict[str, Any], constraint: str
@@ -139,3 +154,13 @@ def test_no_separate_index_on_document_id(migrated_database_url: str) -> None:
         "pk_chunks",
         "uq_chunks_document_id_position",
     }
+
+
+def test_section_is_optional(migrated_database_url: str) -> None:
+    async def work(connection: AsyncConnection) -> list[str | None]:
+        document_id = await _add_document(connection)
+        with_section = await _add_chunk(connection, document_id, position=0, section="Dersin Amacı")
+        without = await _add_chunk(connection, document_id, position=1, section=None)
+        return [with_section.section, without.section]
+
+    assert run_in_rolled_back_transaction(migrated_database_url, work) == ["Dersin Amacı", None]

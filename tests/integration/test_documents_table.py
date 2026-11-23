@@ -20,13 +20,14 @@ pytestmark = pytest.mark.integration
 VALID: dict[str, str] = {
     "source_name": "StajSSS.pdf",
     "file_type": "pdf",
+    "kind": "faq",
     "academic_year": "2025-2026",
     "status": "current",
     "content_hash": "0123456789abcdef" * 4,
 }
 INSERT = text(
-    "INSERT INTO documents (source_name, file_type, academic_year, status, content_hash) "
-    "VALUES (:source_name, :file_type, :academic_year, :status, :content_hash) "
+    "INSERT INTO documents (source_name, file_type, kind, academic_year, status, content_hash) "
+    "VALUES (:source_name, :file_type, :kind, :academic_year, :status, :content_hash) "
     "RETURNING id, created_at, updated_at"
 )
 NFC_NAME = "İstatistik Olasılık 1.txt"
@@ -86,6 +87,9 @@ def test_timestamps_are_timestamptz_columns(migrated_database_url: str) -> None:
         ("content_hash", "0" * 63, "ck_documents_content_hash"),
         ("content_hash", "g" * 64, "ck_documents_content_hash"),
         ("source_name", NFD_NAME, "ck_documents_source_name_nfc"),
+        ("kind", "announcement", "ck_documents_kind"),
+        ("kind", "table", "ck_documents_kind_table_is_csv"),
+        ("file_type", "csv", "ck_documents_kind_table_is_csv"),
     ],
 )
 def test_invalid_value_is_rejected(
@@ -122,3 +126,11 @@ def test_nfd_and_nfc_spellings_are_the_same_source(migrated_database_url: str) -
 
     with pytest.raises(IntegrityError, match="uq_documents_source_name"):
         run_in_rolled_back_transaction(migrated_database_url, work)
+
+
+def test_csv_file_is_stored_as_a_table(migrated_database_url: str) -> None:
+    row = {**VALID, "source_name": "DersPlan.csv", "file_type": "csv", "kind": "table"}
+
+    (stored,) = _insert(migrated_database_url, row)
+
+    assert stored.id > 0

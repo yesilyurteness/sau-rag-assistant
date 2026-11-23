@@ -34,9 +34,12 @@ NAMING_CONVENTION = {
 
 FileType = Literal["txt", "pdf", "csv"]
 Status = Literal["current", "superseded"]
+# Decided in step 1c-1 from the structure measurements; each kind gets its own chunker.
+Kind = Literal["course_package", "faq", "decision_list", "slides", "narrative", "table"]
 
 FILE_TYPES: tuple[FileType, ...] = ("txt", "pdf", "csv")
 STATUSES: tuple[Status, ...] = ("current", "superseded")
+KINDS: tuple[Kind, ...] = ("course_package", "faq", "decision_list", "slides", "narrative", "table")
 
 # "2025-2026": four digits, a dash, four digits, and the second year is the first plus one.
 # CASE makes Postgres test the format before casting; AND gives no evaluation order.
@@ -71,11 +74,15 @@ class Document(Base):
         CheckConstraint("content_hash ~ '^[0-9a-f]{64}$'", name="content_hash"),
         # Turkish file names can arrive decomposed (I + combining dot); store one form only.
         CheckConstraint("source_name = normalize(source_name, NFC)", name="source_name_nfc"),
+        CheckConstraint(_in_list("kind", KINDS), name="kind"),
+        # CSV files are tables and only CSV files are: a table never gets chunks.
+        CheckConstraint("(kind = 'table') = (file_type = 'csv')", name="kind_table_is_csv"),
     )
 
     id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
     source_name: Mapped[str] = mapped_column(Text, unique=True)
     file_type: Mapped[FileType] = mapped_column(Text)
+    kind: Mapped[Kind] = mapped_column(Text)
     academic_year: Mapped[str] = mapped_column(Text)
     status: Mapped[Status] = mapped_column(Text)
     # SHA-256 of the raw file bytes, lowercase hex; unchanged hash means no re-ingest (1d).
@@ -105,6 +112,7 @@ class Chunk(Base):
         CheckConstraint("length(text) > 0", name="text_not_empty"),
         CheckConstraint("page IS NULL OR page >= 1", name="page"),
         CheckConstraint("position >= 0", name="position"),
+        CheckConstraint("section IS NULL OR length(section) > 0", name="section_not_empty"),
     )
 
     id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
@@ -113,7 +121,10 @@ class Chunk(Base):
     )
     # 0-based order of the chunk inside its document.
     position: Mapped[int] = mapped_column(Integer)
+    # Exactly as in the source; the header-prefixed search text is built by one function.
     text: Mapped[str] = mapped_column(Text)
+    # Section title the chunk belongs to (e.g. "Dersin Amacı"); NULL when the kind has none.
+    section: Mapped[str | None] = mapped_column(Text)
     # 1-based PDF page; NULL for TXT documents.
     page: Mapped[int | None] = mapped_column(Integer)
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

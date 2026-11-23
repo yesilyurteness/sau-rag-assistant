@@ -144,7 +144,11 @@ provider is chosen by configuration.
   copy, the flat copy and line-level de-duplication each keep; EBS header/footer lines and
   private-use glyphs are removed in an EBS-specific module, not in `clean_text`; show a
   "Program Çıktıları" sample and recommend keeping or skipping it.
-- Next: step 1c-2 (`kind` and `section` columns).
+- Step 1c-2 done: migration `0004` adds `documents.kind` (NOT NULL, CHECK on the kind
+  list, and `(kind = 'table') = (file_type = 'csv')`) and nullable `chunks.section`
+  (CHECK: NULL or non-empty).
+- Next: step 1c-3 (core chunk type, fixed-window baseline chunker, structural metrics), then
+  the 1c-4a measurement.
 
 ## Data
 

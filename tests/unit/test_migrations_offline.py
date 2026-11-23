@@ -30,3 +30,6 @@ def test_offline_sql_renders_the_schema(capsys: pytest.CaptureFixture[str]) -> N
     assert "CONSTRAINT ck_documents_academic_year CHECK" in sql
     assert "CREATE TABLE chunks" in sql
     assert "REFERENCES documents (id) ON DELETE CASCADE" in sql
+    assert "ALTER TABLE documents ADD COLUMN kind TEXT NOT NULL" in sql
+    assert "CONSTRAINT ck_documents_kind_table_is_csv CHECK" in sql
+    assert "ALTER TABLE chunks ADD COLUMN section TEXT" in sql
