@@ -260,3 +260,28 @@ def test_names_without_a_space_after_the_comma_are_not_lost() -> None:
     flat = ["Dersi Verenler Prof.Dr. ORHAN TORKUL, Öğr.Gör. KAZIM GÜRKAN,"]
 
     assert word_loss(table, flat) == 0.0
+
+
+def test_learning_outcome_matrix_is_skipped_and_counted() -> None:
+    matrix_table = [
+        "# | Ders Öğrenme Çıktılarının Program Çıktılarına Katkısı | |",
+        "| | |",
+        "1 | Matematik bilgisi. | 3 |",
+        "2 | Tasarlama becerisi. | 4 |",
+    ]
+    matrix_flat = [
+        "# Ders Öğrenme Çıktılarının Program Çıktılarına Katkısı",
+        "1 Matematik bilgisi. 3",
+    ]
+    lines = [*PAGE_1_TABLE, TIMESTAMP, *PAGE_1_FLAT, _url(1, 2)]
+    split_at = PAGE_2_TABLE.index("Değerlendirme Sistemi | | |")
+    lines += [*PAGE_2_TABLE[:split_at], *matrix_table, *PAGE_2_TABLE[split_at:], TIMESTAMP]
+    flat_at = PAGE_2_FLAT.index("Değerlendirme Sistemi")
+    lines += [*PAGE_2_FLAT[:flat_at], *matrix_flat, *PAGE_2_FLAT[flat_at:], _url(2, 2)]
+
+    result = clean_ebs("\n".join(lines))
+
+    assert "Program Çıktılarına Katkısı" not in result.text
+    assert "Matematik bilgisi" not in result.text
+    assert "skipped the learning outcome to program outcome matrix (4 lines)" in result.warnings
+    assert result.word_loss == 0.0  # the flat copy's matrix is left out of the loss too

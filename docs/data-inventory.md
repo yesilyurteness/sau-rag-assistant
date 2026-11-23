@@ -13,7 +13,7 @@ file name and size and still needs a content review.
 |---|---|---|---|---|---|---|---|---|
 | 1 | `DersPlan.csv` | CSV | 1 | SQL `courses` | public | 2025-26 | read | Semester, code, name, type, T+U, credit, ECTS. Elective slots have no course code. Four identical `MF-Teknik Seçmeli` rows per semester. |
 | 2 | `seçmeliDersler.csv` | CSV | 1 | SQL `elective_courses` | public | 2025-26 | name only | |
-| 3 | `akademikKadro.csv` | CSV | 1 | SQL `staff` | public | 2025-26 | name only | Names, titles, work e-mail addresses (public on the department site). |
+| 3 | `akademikKadro.csv` | CSV | 1 | SQL `staff` | public | 2025-26 | name only | Titles, names and a v1 `Metin` sentence; no e-mail addresses (checked in step 1a-3a). E-mail addresses are in `BolumYonetimi.csv` and `Komisyonlar.csv`. |
 | 4 | `BolumYonetimi.csv` | CSV | 1 | SQL `staff` (role column) | public | 2025-26 | read | Chair and two vice chairs. Roles can change. |
 | 5 | `Komisyonlar.csv` | CSV | 1 | SQL `committees`, `committee_members` | public | 2025-26 | name only | 24 KB, largest structured file. |
 | 6 | `25-26AkademikTakvim.csv` | CSV | 1 | SQL `academic_calendar` | public | 2025-26 | name only | **Outdated: must be replaced with the 2026-27 calendar.** |

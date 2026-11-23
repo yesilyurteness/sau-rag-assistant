@@ -46,6 +46,11 @@ _OUTCOMES_END = (
     "AKTS - İş Yükü",
     "Kaynaklar",
 )
+# The matrix "Ders Öğrenme Çıktılarının Program Çıktılarına Katkısı" maps each learning outcome
+# to program outcome numbers; it is skipped too (decision 1c-4b) and ends at the next heading.
+_TABLE_MATRIX_START = ("# | Ders Öğrenme Çıktılarının Program Çıktılarına Katkısı",)
+_FLAT_MATRIX_START = ("# Ders Öğrenme Çıktılarının Program Çıktılarına Katkısı",)
+_MATRIX_END = ("Değerlendirme Sistemi", "Yarıyıl Çalışmaları", "AKTS - İş Yükü", "Kaynaklar")
 # A contribution mark: an "X" cell in the table copy.
 _MARK = re.compile(r"(^|\|)\s*X\s*(\||$)")
 
@@ -179,12 +184,16 @@ def word_loss(result_lines: list[str], flat_lines: list[str]) -> float:
 
 
 def clean_ebs(text: str) -> EbsResult:
-    """Title line plus the cleaned table copy, without the program outcomes section."""
+    """Title line plus the cleaned table copy, without program outcomes and their matrix."""
     copies = split_copies(text)
     title = find_title(copies.flat)
 
     table, marked_rows = skip_section(copies.table, _TABLE_OUTCOMES_START, _OUTCOMES_END)
+    before_matrix = len(table)
+    table, _ = skip_section(tuple(table), _TABLE_MATRIX_START, _MATRIX_END)
+    matrix_lines = before_matrix - len(table)
     flat, _ = skip_section(copies.flat, _FLAT_OUTCOMES_START, _OUTCOMES_END)
+    flat, _ = skip_section(tuple(flat), _FLAT_MATRIX_START, _MATRIX_END)
 
     glyphs = sum(len(_PRIVATE_USE.findall(line)) for line in table)
     lines: list[str] = [title] if title else []
@@ -207,6 +216,10 @@ def clean_ebs(text: str) -> EbsResult:
     if rejoined:
         warnings.append(f"rejoined {rejoined} words split inside a collapsible row")
     warnings.append(f"skipped the program outcomes section ({marked_rows} rows with a mark)")
+    if matrix_lines:
+        warnings.append(
+            f"skipped the learning outcome to program outcome matrix ({matrix_lines} lines)"
+        )
     if title is None:
         warnings.append("no EBS title line, academic year unknown")
     if loss > WORD_LOSS_WARNING:

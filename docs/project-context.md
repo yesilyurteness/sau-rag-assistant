@@ -174,7 +174,25 @@ provider is chosen by configuration.
   showed 9 files above 2%; that was the measurement splitting only on spaces ("TORKUL,Öğr.Gör."
   in the table copy) and one wrapped title, both fixed before the commit.
 - Step 1d: compare the EBS title's academic year with the manifest's year; warn if they differ.
-- Next: step 1c-4b (course-package chunker by section).
+- Step 1c-4b done: `ebs.py` also skips the learning outcome to program outcome matrix
+  (reported as information, with its line count). `app/ingestion/chunking/course_package.py`:
+  the identity fields ("Künye", with the title line) form one chunk, each main section one
+  chunk (`section` = section name); a section over 1500 characters is split only at line
+  starts, the two tables (learning outcomes, weekly topics) only at row starts ("N |") with
+  the table's header row repeated at the top of a continuation chunk (so that chunk is not
+  one contiguous slice of the source); a header repeated at a page top is dropped; the
+  workload table is never split (over the size it stays whole with a warning).
+  `course_title` returns "Name (CODE)" from the identity table, for `documents.title` (the
+  migration and the header-prefixed search text come in 1c-5). Result on the 82 real files
+  (same cleaned input for all): structure 688 chunks, 29 of 656 sections split, 95.6% of
+  sections and 100% of table rows kept whole; fixed 1000/200: 457 chunks, 70.9% / 98.9%;
+  fixed 1500/200: 303 chunks, 78.7% / 99.2%. 31 chunks under 100 characters, 20 of them only
+  headings of sections that are empty in the source. 82/82 course titles found.
+- Decisions 1c-4b: size limit 1500 characters. In step 3 the baseline runs twice, at
+  1000/200 (v1) and 1500/200 (same size, so structure is the only difference).
+- Step 1d: design the report with info and warnings separated (for example "kept the table
+  copy" is information, "word loss above 2%" is a warning).
+- Next: decide on heading-only chunks of empty sections, then step 1c-4c (next kind).
 
 ## Data
 
@@ -243,6 +261,9 @@ Accounts are set up; keys live only in the owner's local `.env`, never in chat o
   Langfuse SDK host variable name (`LANGFUSE_BASE_URL` vs `LANGFUSE_HOST`); upload the
   golden set to the HF dataset together with the eval runner; keep eval reports in
   `evals/reports/`.
+- Open risk (measure in steps 3 and 4): EBS writes course names with Roman numerals
+  ("İstatistik Olasılık I") while file names and questions use digits ("İstatistik Olasılık
+  1"); keyword search may miss the match.
 - Step 1d: protect "CSV documents get no chunks" with a test (the schema does not enforce
   it).
 - ADR-0002 (step 1c): record as a known limitation that lone bullet glyphs are removed, not
