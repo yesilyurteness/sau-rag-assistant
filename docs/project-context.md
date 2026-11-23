@@ -112,7 +112,14 @@ provider is chosen by configuration.
   `alembic check` runs in an integration test to prove models and migrations agree.
   Autogenerate does not compare CHECK constraints, so those are covered by their own
   integration tests.
-- Next: step 1b-3 (`chunks` table).
+- Step 1b-3 done: `Chunk` model and migration `0003`. `document_id` references `documents`
+  with ON DELETE CASCADE in the database; unique `(document_id, position)` (also serves
+  lookups by document, so no separate index); CHECKs `length(text) > 0`,
+  `page IS NULL OR page >= 1`, `position >= 0`; `created_at` is `timestamptz`. The naming
+  convention now joins all columns of a key (`uq_chunks_document_id_position`).
+  `alembic check` covers both tables (it also catches a missing CASCADE).
+- **Step 1b (schema) is complete.**
+- Next: step 1c (chunking and ADR-0002). Split proposed, waiting for approval.
 
 ## Data
 
@@ -179,5 +186,7 @@ Accounts are set up; keys live only in the owner's local `.env`, never in chat o
   Langfuse SDK host variable name (`LANGFUSE_BASE_URL` vs `LANGFUSE_HOST`); upload the
   golden set to the HF dataset together with the eval runner; keep eval reports in
   `evals/reports/`.
+- Step 1d: protect "CSV documents get no chunks" with a test (the schema does not enforce
+  it).
 - ADR-0002 (step 1c): record as a known limitation that lone bullet glyphs are removed, not
   placed on their line by page coordinates, so Sunum1 loses 84 bullet markers.

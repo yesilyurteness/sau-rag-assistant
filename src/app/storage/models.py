@@ -8,13 +8,25 @@ import unicodedata
 from datetime import datetime
 from typing import Literal
 
-from sqlalchemy import BigInteger, CheckConstraint, DateTime, Identity, MetaData, Text, func
+from sqlalchemy import (
+    BigInteger,
+    CheckConstraint,
+    DateTime,
+    ForeignKey,
+    Identity,
+    Integer,
+    MetaData,
+    Text,
+    UniqueConstraint,
+    func,
+)
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, validates
 
 # Fixed constraint names, so migrations and the models name things the same way.
+# column_0_N_name joins all column names, so a two-column key is named after both.
 NAMING_CONVENTION = {
-    "ix": "ix_%(table_name)s_%(column_0_name)s",
-    "uq": "uq_%(table_name)s_%(column_0_name)s",
+    "ix": "ix_%(table_name)s_%(column_0_N_name)s",
+    "uq": "uq_%(table_name)s_%(column_0_N_name)s",
     "ck": "ck_%(table_name)s_%(constraint_name)s",
     "fk": "fk_%(table_name)s_%(column_0_name)s_%(referred_table_name)s",
     "pk": "pk_%(table_name)s",
@@ -76,3 +88,32 @@ class Document(Base):
     @validates("source_name")
     def _normalize_source_name(self, _key: str, value: str) -> str:
         return unicodedata.normalize("NFC", value)
+
+
+class Chunk(Base):
+    """A piece of a TXT or PDF document's text, in reading order.
+
+    Deleting a document deletes its chunks in the database itself (ON DELETE CASCADE), so a
+    re-ingest that replaces a document cannot leave orphans. Embeddings (step 3) and the
+    full-text search column (step 4) are added by their own migrations.
+    """
+
+    __tablename__ = "chunks"
+    __table_args__ = (
+        # Also serves lookups by document_id, so no separate index on that column.
+        UniqueConstraint("document_id", "position"),
+        CheckConstraint("length(text) > 0", name="text_not_empty"),
+        CheckConstraint("page IS NULL OR page >= 1", name="page"),
+        CheckConstraint("position >= 0", name="position"),
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, Identity(), primary_key=True)
+    document_id: Mapped[int] = mapped_column(
+        BigInteger, ForeignKey("documents.id", ondelete="CASCADE")
+    )
+    # 0-based order of the chunk inside its document.
+    position: Mapped[int] = mapped_column(Integer)
+    text: Mapped[str] = mapped_column(Text)
+    # 1-based PDF page; NULL for TXT documents.
+    page: Mapped[int | None] = mapped_column(Integer)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())

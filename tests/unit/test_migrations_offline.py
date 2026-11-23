@@ -28,3 +28,5 @@ def test_offline_sql_renders_the_schema(capsys: pytest.CaptureFixture[str]) -> N
     assert "CREATE EXTENSION IF NOT EXISTS pg_trgm" in sql
     assert "CREATE TABLE documents" in sql
     assert "CONSTRAINT ck_documents_academic_year CHECK" in sql
+    assert "CREATE TABLE chunks" in sql
+    assert "REFERENCES documents (id) ON DELETE CASCADE" in sql

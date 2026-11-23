@@ -3,18 +3,17 @@
 Every test runs in a transaction that is rolled back, so tests do not see each other's rows.
 """
 
-import asyncio
 import unicodedata
-from collections.abc import Awaitable, Callable
 from datetime import datetime
 from typing import Any
 
 import pytest
 from sqlalchemy import select, text
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncConnection, AsyncSession
 
 from app.storage.models import Document
+from tests.integration.conftest import run_in_rolled_back_transaction
 
 pytestmark = pytest.mark.integration
 
@@ -34,31 +33,11 @@ NFC_NAME = "İstatistik Olasılık 1.txt"
 NFD_NAME = unicodedata.normalize("NFD", NFC_NAME)
 
 
-def _in_rolled_back_transaction(
-    database_url: str, work: Callable[[AsyncConnection], Awaitable[Any]]
-) -> Any:
-    async def run() -> Any:
-        engine = create_async_engine(database_url)
-        try:
-            async with engine.connect() as connection:
-                transaction = await connection.begin()
-                try:
-                    return await work(connection)
-                finally:
-                    # A failed statement has already ended the transaction.
-                    if transaction.is_active:
-                        await transaction.rollback()
-        finally:
-            await engine.dispose()
-
-    return asyncio.run(run())
-
-
 def _insert(database_url: str, *rows: dict[str, str]) -> list[Any]:
     async def work(connection: AsyncConnection) -> list[Any]:
         return [(await connection.execute(INSERT, row)).one() for row in rows]
 
-    return _in_rolled_back_transaction(database_url, work)
+    return run_in_rolled_back_transaction(database_url, work)
 
 
 def _violated_constraint(database_url: str, *rows: dict[str, str]) -> str:
@@ -87,7 +66,7 @@ def test_timestamps_are_timestamptz_columns(migrated_database_url: str) -> None:
         )
         return {name: data_type for name, data_type in result}
 
-    assert _in_rolled_back_transaction(migrated_database_url, work) == {
+    assert run_in_rolled_back_transaction(migrated_database_url, work) == {
         "created_at": "timestamp with time zone",
         "updated_at": "timestamp with time zone",
     }
@@ -130,7 +109,7 @@ def test_orm_stores_a_decomposed_name_as_nfc(migrated_database_url: str) -> None
         await session.flush()
         return list(await session.scalars(select(Document.source_name)))
 
-    assert _in_rolled_back_transaction(migrated_database_url, work) == [NFC_NAME]
+    assert run_in_rolled_back_transaction(migrated_database_url, work) == [NFC_NAME]
 
 
 def test_nfd_and_nfc_spellings_are_the_same_source(migrated_database_url: str) -> None:
@@ -142,4 +121,4 @@ def test_nfd_and_nfc_spellings_are_the_same_source(migrated_database_url: str) -
         await session.flush()
 
     with pytest.raises(IntegrityError, match="uq_documents_source_name"):
-        _in_rolled_back_transaction(migrated_database_url, work)
+        run_in_rolled_back_transaction(migrated_database_url, work)

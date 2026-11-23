@@ -7,14 +7,16 @@ names are the same.
 """
 
 import asyncio
+from collections.abc import Awaitable, Callable
 from pathlib import Path
+from typing import Any
 
 import pytest
 from alembic import command
 from alembic.config import Config
 from sqlalchemy import make_url, text
 from sqlalchemy.engine import URL
-from sqlalchemy.ext.asyncio import create_async_engine
+from sqlalchemy.ext.asyncio import AsyncConnection, create_async_engine
 
 from app.core.config import get_settings
 
@@ -73,3 +75,25 @@ def migrated_database_url(test_database_url: str) -> str:
     """The test database upgraded to the latest migration."""
     command.upgrade(alembic_config(test_database_url), "head")
     return test_database_url
+
+
+def run_in_rolled_back_transaction(
+    database_url: str, work: Callable[[AsyncConnection], Awaitable[Any]]
+) -> Any:
+    """Run `work` in a transaction that is always rolled back, so tests share no rows."""
+
+    async def run() -> Any:
+        engine = create_async_engine(database_url)
+        try:
+            async with engine.connect() as connection:
+                transaction = await connection.begin()
+                try:
+                    return await work(connection)
+                finally:
+                    # A failed statement has already ended the transaction.
+                    if transaction.is_active:
+                        await transaction.rollback()
+        finally:
+            await engine.dispose()
+
+    return asyncio.run(run())
