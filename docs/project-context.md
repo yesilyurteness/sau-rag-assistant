@@ -161,7 +161,20 @@ provider is chosen by configuration.
   both receive the same cleaned input; for course packages that is the text after the EBS
   cleanup. Selecting the chunker by configuration (a `Settings` field) is added in 1c-4,
   when a second chunker exists.
-- Next: the 1c-4a measurement (EBS cleanup).
+- Step 1c-4a done: `app/ingestion/ebs.py` (pure functions, EBS-specific, not in
+  `clean_text`). Keeps the table copy plus the flat copy's title line (wrapped titles are
+  joined); removes layout lines (page counters, pipe-only and glyph-only lines) and all
+  private-use glyphs; rejoins a word cut in two only inside U+EDD9/EDDA rows ("1. Y | ıl",
+  "AK | TS"); skips the program outcomes section (decision (a)), reporting how many skipped
+  rows had a mark; measures word loss against the flat copy (program outcomes and page
+  marks excluded, commas count as separators) and warns above 2%; no automatic filling from
+  the flat copy. On the 82 real files: no errors, word loss max 0.71% (median 0%), no file
+  above 2%, 82/82 titles give 2025-2026, no program-outcome text and no glyph left; totals
+  1618 layout lines, 343 glyphs, 4 rejoined words, 112 skipped marked rows. The first run
+  showed 9 files above 2%; that was the measurement splitting only on spaces ("TORKUL,Öğr.Gör."
+  in the table copy) and one wrapped title, both fixed before the commit.
+- Step 1d: compare the EBS title's academic year with the manifest's year; warn if they differ.
+- Next: step 1c-4b (course-package chunker by section).
 
 ## Data
 
@@ -233,4 +246,7 @@ Accounts are set up; keys live only in the owner's local `.env`, never in chat o
 - Step 1d: protect "CSV documents get no chunks" with a test (the schema does not enforce
   it).
 - ADR-0002 (step 1c): record as a known limitation that lone bullet glyphs are removed, not
-  placed on their line by page coordinates, so Sunum1 loses 84 bullet markers.
+  placed on their line by page coordinates, so Sunum1 loses 84 bullet markers. Also record:
+  the fixed-window baseline is similar to, but not identical with, the n8n/LangChain
+  recursive splitter; program outcomes are skipped, with option (b) (per-course contribution
+  levels as a short line) possible later.
