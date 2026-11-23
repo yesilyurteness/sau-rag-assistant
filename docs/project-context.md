@@ -119,7 +119,32 @@ provider is chosen by configuration.
   convention now joins all columns of a key (`uq_chunks_document_id_position`).
   `alembic check` covers both tables (it also catches a missing CASCADE).
 - **Step 1b (schema) is complete.**
-- Next: step 1c (chunking and ADR-0002). Split proposed, waiting for approval.
+- Step 1c split: 1c-1 measure structure (no commit), 1c-2 `kind` and `section` columns,
+  1c-3 core chunk type, fixed-window baseline chunker and structural metrics, 1c-4 one
+  chunker per kind (1c-4a EBS cleanup first), 1c-5 chunk header, 1c-6 ADR-0002. Decisions:
+  - Retrieval comparison happens in step 3: 1c decides on structural metrics, the
+    fixed-window chunker stays selectable by configuration, and both are compared on the
+    same eval set; ADR-0002 says "to be validated in step 3" and is updated with the result.
+  - `chunks.section` (nullable); `text` stays as in the source. One pure function builds the
+    header-prefixed search text; embeddings (step 3) and keyword search (step 4) both use it,
+    and it has its own tests.
+  - Size limits in characters for now; revisit against the embedding model's token limit in
+    step 3.
+- Step 1c-1 done (measurement): 82 EBS course packages (`Staj 1`, `Staj 2`, `Bitirme
+  Calismasi`, `Uygulamali Muhendislik Deneyimi Egitimi` included). Every one prints each page
+  twice (a `|` table copy and a flat copy, 57-86% of long lines repeat), carries 5-9 EBS
+  header/footer lines and 11-13 private-use glyphs; all standard sections are present in
+  82/82 except `Ders Kaynakları` (65) and `dersAKTSKredisi` (78).
+- Kinds decided: `course_package`, `faq` (StajSSS.pdf), `decision_list`
+  (YatayDikeyGecisIntibakKomisyonKarari.pdf), `slides` (the two Sunum PDFs), `narrative`
+  (BolumTanitimi.txt, StajBilgilendirme.txt, OgrenciDanismanligi.pdf, OgrenciDegisimi.pdf,
+  the Ara Dönem PDF), `table` (CSVs). The narrative chunker must not separate a bulleted list
+  from its introducing sentence.
+- 1c-4a (EBS cleanup) starts with a measurement: how much of the unique content the table
+  copy, the flat copy and line-level de-duplication each keep; EBS header/footer lines and
+  private-use glyphs are removed in an EBS-specific module, not in `clean_text`; show a
+  "Program Çıktıları" sample and recommend keeping or skipping it.
+- Next: step 1c-2 (`kind` and `section` columns).
 
 ## Data
 
@@ -143,6 +168,9 @@ Facts confirmed by the owner (use these when sources disagree):
   correct.
 - `MezuniyetKosulları.txt` is deleted and must not be used (it says 60 internship days).
 - PDF/TXT twins (`StajSSS`, `OgrenciDegisimi`, `OgrenciDanismanligi`): ingest the PDF only.
+  The TXT twins are no longer in the source folder.
+- `StajBilgilendirme.txt`: a 9-line block repeated at the end was removed in the source file
+  (sau-data and Drive). "Akademik yıl: 2024-2025" is the source's own wording and stays.
 
 Scope: no department-website integration and no 2026-27 data collection. Time-sensitive
 answers state the source year.
@@ -180,8 +208,7 @@ Accounts are set up; keys live only in the owner's local `.env`, never in chat o
 
 ## Open items
 
-- Owner: move the TXT twins to an `arsiv` subfolder; review the ingestion report after
-  step 1; decide hosting and budget before step 7.
+- Owner: review the ingestion report after step 1; decide hosting and budget before step 7.
 - Engineering: CI Node 20 action warnings and a starlette/httpx test warning; check the
   Langfuse SDK host variable name (`LANGFUSE_BASE_URL` vs `LANGFUSE_HOST`); upload the
   golden set to the HF dataset together with the eval runner; keep eval reports in
