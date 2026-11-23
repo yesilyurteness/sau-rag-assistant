@@ -1,14 +1,16 @@
 """Data types shared by all loaders.
 
-Every loader (TXT, PDF, CSV) returns a `LoadedDocument`, so later steps (database, chunking)
-do not need to know which file type a document came from.
+The TXT and PDF loaders return a `LoadedDocument`, text to be searched, so later steps
+(database, chunking) do not need to know which file type a document came from. The CSV loader
+returns a `LoadedTable`: its rows go to SQL tables in step 2, so cells are kept apart instead of
+being turned into text.
 """
 
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Literal
 
-FileType = Literal["txt", "pdf", "csv"]
+FileType = Literal["txt", "pdf"]
 
 
 @dataclass(frozen=True, slots=True)
@@ -37,3 +39,19 @@ class LoadedDocument:
     def text(self) -> str:
         """All segment texts joined with a blank line."""
         return "\n\n".join(segment.text for segment in self.segments)
+
+
+@dataclass(frozen=True, slots=True)
+class LoadedTable:
+    """The rows of one CSV file, cells kept as raw strings.
+
+    Every row has exactly `len(columns)` cells and column names are unique and non-empty,
+    so `zip(columns, row)` is always safe. Types, empty-cell meaning and which columns to keep
+    are decided by the SQL step, not here.
+    """
+
+    source: Path
+    columns: tuple[str, ...]
+    rows: tuple[tuple[str, ...], ...]
+    encoding: str
+    warnings: tuple[str, ...] = field(default_factory=tuple)

@@ -66,7 +66,13 @@ provider is chosen by configuration.
   `DocumentReadError` naming the row and expected/found widths; `Metin` is returned raw.
 - Step 1a-3b done: `ENCODINGS`, `decode_bytes` and `encoding_warnings` moved from the TXT
   loader to `app/ingestion/encoding.py`; TXT behaviour and tests unchanged.
-- Next: step 1a-3c. Propose the CSV output type first and wait for approval.
+- Step 1a-3c done: `load_csv` returns a `LoadedTable` (`columns` + `rows` of raw strings,
+  `encoding`, `warnings`); a separate type because CSV rows go to SQL in step 2 and turning
+  them into text was the v1 approach that produced artifacts. `FileType` no longer has "csv".
+  Empty or duplicate column names are a `DocumentReadError`; a header without data rows is an
+  `EmptyDocumentError`. On the real files: 8 tables load, the only warnings are the dropped
+  separator-only rows (DersPlan 1, ogrenciSayilari 3).
+- Next: step 1a-3d, `clean_text` on every cell and column name with a count warning.
 
 ## Data
 
