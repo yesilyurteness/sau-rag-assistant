@@ -55,7 +55,18 @@ provider is chosen by configuration.
   lines holding a single private-use glyph are removed; a glyph at line start before text
   becomes "- ". Each fix reports its count as a warning. Line breaks are not joined. On the
   real files only Sunum1 and Ara Dönem change; the other 5 texts are byte-identical.
-- Next: step 1a-3 (CSV loader). Show its split before coding and wait for approval.
+- Step 1a-3 split: 1a-3a measure the 8 CSVs (no commit), 1a-3b shared `decode_bytes`,
+  1a-3c CSV output type and `load_csv`, 1a-3d `clean_text` on every cell.
+- Step 1a-3a done: all 8 CSVs are UTF-8 with BOM, CRLF, delimiter ";", every row as wide as
+  its header, no suspicious characters. 4 separator-only rows (DersPlan 1, ogrenciSayilari 3),
+  31 cells with trailing spaces, 48 empty cells in DersPlan (elective slots, a data question
+  for step 2), quoted ";" inside cells in ogrenciSayilari. Every file has a v1 `Metin` column.
+  Decisions: fixed ";" (one-column header is a `DocumentReadError`); empty or separator-only
+  rows are dropped anywhere with a count warning; a row of the wrong width is a
+  `DocumentReadError` naming the row and expected/found widths; `Metin` is returned raw.
+- Step 1a-3b done: `ENCODINGS`, `decode_bytes` and `encoding_warnings` moved from the TXT
+  loader to `app/ingestion/encoding.py`; TXT behaviour and tests unchanged.
+- Next: step 1a-3c. Propose the CSV output type first and wait for approval.
 
 ## Data
 
@@ -124,3 +135,5 @@ Accounts are set up; keys live only in the owner's local `.env`, never in chat o
   `evals/reports/`.
 - ADR-0002 (step 1c): record as a known limitation that lone bullet glyphs are removed, not
   placed on their line by page coordinates, so Sunum1 loses 84 bullet markers.
+- After step 1a-3, separate step: enable ruff `PLE251` and add a unit test that fails on
+  invisible or private-use characters in tracked text files (ruff alone only catches U+200B).
