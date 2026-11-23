@@ -43,7 +43,7 @@ class LoadedDocument:
 
 @dataclass(frozen=True, slots=True)
 class LoadedTable:
-    """The rows of one CSV file, cells kept as raw strings.
+    """The rows of one CSV file, cells kept as strings (form cleaned, content untouched).
 
     Every row has exactly `len(columns)` cells and column names are unique and non-empty,
     so `zip(columns, row)` is always safe. Types, empty-cell meaning and which columns to keep

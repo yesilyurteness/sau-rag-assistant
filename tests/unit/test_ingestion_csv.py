@@ -162,6 +162,77 @@ def test_undecodable_file_raises_decode_error(tmp_path: Path) -> None:
         load_csv(path)
 
 
+# --- cleaning (step 1a-3d)
+
+ZERO_WIDTH_SPACE = chr(0x200B)
+NO_BREAK_SPACE = chr(0x00A0)
+
+
+def test_trailing_spaces_are_removed_and_counted(tmp_path: Path) -> None:
+    # Komisyonlar.csv has trailing spaces in "Durum" and "Akademisyen".
+    path = _write(
+        tmp_path,
+        "Komisyon;Durum ;Akademisyen\n"
+        "Staj Komisyonu;Komisyon Başkanı ;Doç. Dr. Seher Polat \n"
+        "Staj Komisyonu;Komisyon Üyesi;Dr. Öğr. Üyesi Nevra Akbilek\n",
+    )
+
+    table = load_csv(path)
+
+    assert table.columns == ("Komisyon", "Durum", "Akademisyen")
+    assert table.rows[0] == ("Staj Komisyonu", "Komisyon Başkanı", "Doç. Dr. Seher Polat")
+    assert table.warnings == ("cleaned 3 cells",)
+
+
+def test_invisible_characters_are_removed_from_cells(tmp_path: Path) -> None:
+    path = _write(
+        tmp_path,
+        f"Kodu;Ders\nMAT{NO_BREAK_SPACE}111;Mate{ZERO_WIDTH_SPACE}matik  1\n",
+    )
+
+    table = load_csv(path)
+
+    assert table.rows == (("MAT 111", "Matematik 1"),)
+    assert table.warnings == ("cleaned 2 cells",)
+
+
+def test_names_that_collide_after_cleaning_are_rejected(tmp_path: Path) -> None:
+    path = _write(tmp_path, f"Kodu;Kodu ;Ders{ZERO_WIDTH_SPACE}\nMAT 111;MAT 111;Matematik 1\n")
+
+    with pytest.raises(DocumentReadError) as exc_info:
+        load_csv(path)
+
+    assert exc_info.value.reason == "duplicate column names: Kodu"
+
+
+def test_column_name_of_only_invisible_characters_is_empty(tmp_path: Path) -> None:
+    path = _write(tmp_path, f"Personel;{ZERO_WIDTH_SPACE} ;Metin\nProfesör;6;Altı profesör.\n")
+
+    with pytest.raises(DocumentReadError) as exc_info:
+        load_csv(path)
+
+    assert exc_info.value.reason == "empty column name at position 2"
+
+
+def test_row_of_only_invisible_characters_is_dropped(tmp_path: Path) -> None:
+    path = _write(tmp_path, f"{HEADER}\n{ROW_1}\n{ZERO_WIDTH_SPACE};{NO_BREAK_SPACE};;\n")
+
+    table = load_csv(path)
+
+    assert len(table.rows) == 1
+    assert table.warnings == ("dropped 1 empty or separator-only rows",)
+
+
+def test_warnings_list_cleaning_before_dropped_rows(tmp_path: Path) -> None:
+    path = _write(tmp_path, f"{HEADER}\n{ROW_1} \n;;;\n", encoding="cp1254")
+
+    assert load_csv(path).warnings == (
+        "decoded as cp1254, not UTF-8",
+        "cleaned 1 cells",
+        "dropped 1 empty or separator-only rows",
+    )
+
+
 def test_csv_loader_errors_share_the_ingestion_base_class(tmp_path: Path) -> None:
     path = _write(tmp_path, "")
 

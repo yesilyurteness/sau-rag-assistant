@@ -72,7 +72,16 @@ provider is chosen by configuration.
   Empty or duplicate column names are a `DocumentReadError`; a header without data rows is an
   `EmptyDocumentError`. On the real files: 8 tables load, the only warnings are the dropped
   separator-only rows (DersPlan 1, ogrenciSayilari 3).
-- Next: step 1a-3d, `clean_text` on every cell and column name with a count warning.
+- Step 1a-3d done: `clean_text` runs on every column name and cell; header checks and the
+  blank-row decision use the cleaned values (names that collide after cleaning are a
+  `DocumentReadError`); warning "cleaned N cells". On the real files 63 cells change, all in
+  whitespace only: the 31 trailing-space cells from 1a-3a, 30 `Metin` cells with a double
+  space (the v1 sentence was built from those padded cells) and 2 `Akademisyen` cells in
+  Komisyonlar with a double space inside the name (1a-3a measured only leading/trailing).
+- **Step 1a (loaders) is complete.**
+- Next: enable ruff `PLE251` and add a unit test that fails on invisible or private-use
+  characters in tracked text files. Show its split before coding and wait for approval.
+  Then 1b (database schema).
 
 ## Data
 
@@ -141,5 +150,5 @@ Accounts are set up; keys live only in the owner's local `.env`, never in chat o
   `evals/reports/`.
 - ADR-0002 (step 1c): record as a known limitation that lone bullet glyphs are removed, not
   placed on their line by page coordinates, so Sunum1 loses 84 bullet markers.
-- After step 1a-3, separate step: enable ruff `PLE251` and add a unit test that fails on
-  invisible or private-use characters in tracked text files (ruff alone only catches U+200B).
+- Next step (see "Current position"): ruff `PLE251` plus an invisible-character unit test;
+  ruff alone only catches U+200B.
