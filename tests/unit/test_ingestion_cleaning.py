@@ -28,7 +28,7 @@ def test_line_endings_are_normalized(raw: str, expected: str) -> None:
 
 
 def test_invisible_characters_are_removed() -> None:
-    raw = "﻿Staj​ Yöner­gesi⁠"
+    raw = "\ufeffStaj\u200b Yöner\u00adgesi\u2060"
     assert clean_text(raw) == "Staj Yönergesi"
 
 
@@ -37,7 +37,7 @@ def test_control_characters_are_removed() -> None:
 
 
 def test_horizontal_whitespace_is_collapsed() -> None:
-    raw = "Ders  Adı:\t\tMatematik 1   "
+    raw = "Ders  Adı:\t\tMatematik\u00a01   "
     assert clean_text(raw) == "Ders Adı: Matematik 1"
 
 
@@ -51,10 +51,10 @@ def test_single_blank_line_is_kept() -> None:
 
 
 def test_whitespace_only_becomes_empty() -> None:
-    assert clean_text(" \t\n​\n ") == ""
+    assert clean_text(" \t\n\u200b\n ") == ""
 
 
 def test_cleaning_is_idempotent() -> None:
-    raw = "﻿  Staj\t süresi:\r\n\r\n\r\n40  iş günü  "
+    raw = "\ufeff  Staj\t süresi:\r\n\r\n\r\n40  iş günü \u00a0"
     once = clean_text(raw)
     assert clean_text(once) == once

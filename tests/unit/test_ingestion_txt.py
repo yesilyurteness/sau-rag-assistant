@@ -50,7 +50,7 @@ def test_text_is_cleaned(tmp_path: Path) -> None:
     assert load_txt(path).text == "AKTS: 5\n\nÖn Koşul: Yok"
 
 
-@pytest.mark.parametrize("data", [b"", b"   \r\n\t\n", "﻿".encode()])
+@pytest.mark.parametrize("data", [b"", b"   \r\n\t\n", "\ufeff".encode()])
 def test_empty_file_raises(tmp_path: Path, data: bytes) -> None:
     path = _write(tmp_path, data, name="BolumTanitimi.txt")
 

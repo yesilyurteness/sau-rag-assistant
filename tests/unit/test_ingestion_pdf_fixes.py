@@ -13,8 +13,8 @@ from app.ingestion.loaders.pdf import (
 )
 
 SAMPLE = Path(__file__).parents[1] / "fixtures" / "ingestion" / "ornek_yonerge.pdf"
-GLYPH = ""  # bullet glyph seen in StajBilgilendirmeSunumu1.pdf
-OTHER_GLYPH = ""  # bullet glyph seen in the Ara Dönem PDF
+GLYPH = "\uf0a2"  # bullet glyph seen in StajBilgilendirmeSunumu1.pdf
+OTHER_GLYPH = "\uf0b7"  # bullet glyph seen in the Ara Dönem PDF
 
 
 # --- broken Turkish letters

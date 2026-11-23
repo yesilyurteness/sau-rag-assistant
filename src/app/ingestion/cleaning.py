@@ -10,12 +10,12 @@ import unicodedata
 
 # Characters that are invisible but break search and comparisons.
 _INVISIBLE = {
-    "﻿": "",  # byte order mark
-    "​": "",  # zero-width space
-    "‌": "",  # zero-width non-joiner
-    "‍": "",  # zero-width joiner
-    "⁠": "",  # word joiner
-    "­": "",  # soft hyphen
+    "\ufeff": "",  # byte order mark
+    "\u200b": "",  # zero-width space
+    "\u200c": "",  # zero-width non-joiner
+    "\u200d": "",  # zero-width joiner
+    "\u2060": "",  # word joiner
+    "\u00ad": "",  # soft hyphen
 }
 _INVISIBLE_TABLE = str.maketrans(_INVISIBLE)
 
