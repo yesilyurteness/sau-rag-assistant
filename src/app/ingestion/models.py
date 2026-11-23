@@ -55,3 +55,17 @@ class LoadedTable:
     rows: tuple[tuple[str, ...], ...]
     encoding: str
     warnings: tuple[str, ...] = field(default_factory=tuple)
+
+
+@dataclass(frozen=True, slots=True)
+class TextChunk:
+    """One chunk produced by a chunker, before it is stored (the DB model is separate).
+
+    `position` is the 0-based order inside the document, `page` the 1-based page the chunk
+    starts on (None for TXT), `section` the section title when the chunker knows one.
+    """
+
+    text: str
+    position: int
+    page: int | None = None
+    section: str | None = None

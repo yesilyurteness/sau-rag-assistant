@@ -147,8 +147,21 @@ provider is chosen by configuration.
 - Step 1c-2 done: migration `0004` adds `documents.kind` (NOT NULL, CHECK on the kind
   list, and `(kind = 'table') = (file_type = 'csv')`) and nullable `chunks.section`
   (CHECK: NULL or non-empty).
-- Next: step 1c-3 (core chunk type, fixed-window baseline chunker, structural metrics), then
-  the 1c-4a measurement.
+- Step 1c-3 done: core type `TextChunk` (frozen dataclass: text, position, page, section;
+  the DB model stays separate) in `app/ingestion/models.py`;
+  `app/ingestion/chunking/fixed_window.py`, a dependency-free recursive character splitter
+  (blank line, line break, space, then characters) with v1's parameters, 1000 characters
+  and 200 overlap (from TasarımDokuman.pdf pages 11 and 15, so not an assumption). It
+  ignores page boundaries but every chunk carries the page it starts on, and every chunk is
+  an exact slice of the input. `app/ingestion/chunking/metrics.py`: pure functions for
+  units kept whole (unit texts as input, whitespace-normalized), size distribution, empty
+  and small chunks (small threshold 100 characters, to be revisited in 1c-4). Tested only
+  with made-up data.
+- Comparison rule: when chunkers are compared (1c-4 structurally, step 3 on the eval set),
+  both receive the same cleaned input; for course packages that is the text after the EBS
+  cleanup. Selecting the chunker by configuration (a `Settings` field) is added in 1c-4,
+  when a second chunker exists.
+- Next: the 1c-4a measurement (EBS cleanup).
 
 ## Data
 
