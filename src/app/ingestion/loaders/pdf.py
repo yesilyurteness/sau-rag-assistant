@@ -32,7 +32,7 @@ _BROKEN_TURKISH = {"Ġ": "İ", "ġ": "Ş", "Ģ": "ş"}
 _BROKEN_TURKISH_TABLE = str.maketrans(_BROKEN_TURKISH)
 
 # Icon fonts (Wingdings, Symbol) put bullet glyphs in the Unicode private-use area.
-_PRIVATE_USE = "-"
+_PRIVATE_USE = "\ue000-\uf8ff"
 _PRIVATE_USE_CHAR = re.compile(f"[{_PRIVATE_USE}]")
 _LONE_GLYPH_LINE = re.compile(f"^[ \\t]*[{_PRIVATE_USE}][ \\t]*$")
 # One glyph at line start followed by real text (not another glyph).
