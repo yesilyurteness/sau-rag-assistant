@@ -101,6 +101,9 @@ provider is chosen by configuration.
   `Settings`; migration `0001` enables `vector` and `pg_trgm` (CI's Postgres does not run
   `init.sql`); `make migrate`. Offline unit tests (single head, rendered SQL) and an
   integration round trip (upgrade, downgrade, upgrade) on real Postgres.
+- Integration tests use their own database `sau_rag_test` (the app `database_url` with
+  only the name changed, created if missing; the session stops if the app database already
+  has that name), so `downgrade base` never touches development data.
 - Next: step 1b-2 (`documents` table).
 
 ## Data

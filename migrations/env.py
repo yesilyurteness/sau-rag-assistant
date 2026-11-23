@@ -1,7 +1,8 @@
 """Alembic environment: runs migrations with the app's async engine.
 
 The URL comes from `app.core.config.Settings`, never from alembic.ini or os.environ, so the
-app and the migrations always talk to the same database.
+app and the migrations always talk to the same database. Tests point migrations at the test
+database by passing `Config.attributes["database_url"]`.
 """
 
 import asyncio
@@ -24,6 +25,9 @@ target_metadata = None
 
 
 def _database_url() -> str:
+    override = config.attributes.get("database_url")
+    if isinstance(override, str):
+        return override
     return str(get_settings().database_url)
 
 

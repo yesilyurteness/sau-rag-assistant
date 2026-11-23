@@ -9,8 +9,8 @@ from app.main import create_app
 pytestmark = pytest.mark.integration
 
 
-def test_readiness_with_real_services() -> None:
-    app = create_app(Settings(app_env="test"))
+def test_readiness_with_real_services(test_database_url: str) -> None:
+    app = create_app(Settings(app_env="test", database_url=test_database_url))  # type: ignore[arg-type]
 
     with TestClient(app) as client:  # `with` runs the lifespan -> real connections
         response = client.get("/health/ready")
