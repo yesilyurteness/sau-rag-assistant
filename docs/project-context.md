@@ -79,9 +79,12 @@ provider is chosen by configuration.
   space (the v1 sentence was built from those padded cells) and 2 `Akademisyen` cells in
   Komisyonlar with a double space inside the name (1a-3a measured only leading/trailing).
 - **Step 1a (loaders) is complete.**
-- Next: enable ruff `PLE251` and add a unit test that fails on invisible or private-use
-  characters in tracked text files. Show its split before coding and wait for approval.
-  Then 1b (database schema).
+- Invisible-character guard done: ruff `PLE251` enabled (3c2314c);
+  `tests/unit/test_no_invisible_chars.py` scans the repository's text files (skips tool and
+  cache directories, binaries and `.env`) and fails on BOM, U+200B-U+200D, U+2060, U+00AD,
+  U+00A0, private-use and other Cf characters, naming file, line, column and code. Write such
+  characters as `\uXXXX` escapes.
+- Next: step 1b (database schema). Split proposed, waiting for approval.
 
 ## Data
 
@@ -150,5 +153,3 @@ Accounts are set up; keys live only in the owner's local `.env`, never in chat o
   `evals/reports/`.
 - ADR-0002 (step 1c): record as a known limitation that lone bullet glyphs are removed, not
   placed on their line by page coordinates, so Sunum1 loses 84 bullet markers.
-- Next step (see "Current position"): ruff `PLE251` plus an invisible-character unit test;
-  ruff alone only catches U+200B.
