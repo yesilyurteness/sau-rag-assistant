@@ -22,3 +22,7 @@ class EmptyDocumentError(IngestionError):
 
 class DocumentDecodeError(IngestionError):
     """The file bytes could not be decoded with any supported encoding."""
+
+
+class DocumentReadError(IngestionError):
+    """The file could not be parsed (corrupt, truncated, encrypted or not really that type)."""

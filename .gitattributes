@@ -1,0 +1,2 @@
+# Test PDFs must stay byte-identical; never convert their line endings.
+*.pdf binary
