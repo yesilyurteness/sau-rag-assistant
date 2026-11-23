@@ -104,7 +104,15 @@ provider is chosen by configuration.
 - Integration tests use their own database `sau_rag_test` (the app `database_url` with
   only the name changed, created if missing; the session stops if the app database already
   has that name), so `downgrade base` never touches development data.
-- Next: step 1b-2 (`documents` table).
+- Step 1b-2 done: `app/storage/models.py` (`Base` with a constraint naming convention,
+  `Document`) and hand-written migration `0002`. Constraints: unique `source_name`, which
+  the ORM normalizes to NFC and a CHECK enforces as NFC; `file_type` and `status` lists;
+  `academic_year` format and consecutive years; `content_hash` 64 lowercase hex characters;
+  `created_at` / `updated_at` are `timestamptz`. `target_metadata` is bound;
+  `alembic check` runs in an integration test to prove models and migrations agree.
+  Autogenerate does not compare CHECK constraints, so those are covered by their own
+  integration tests.
+- Next: step 1b-3 (`chunks` table).
 
 ## Data
 

@@ -7,8 +7,11 @@ names are the same.
 """
 
 import asyncio
+from pathlib import Path
 
 import pytest
+from alembic import command
+from alembic.config import Config
 from sqlalchemy import make_url, text
 from sqlalchemy.engine import URL
 from sqlalchemy.ext.asyncio import create_async_engine
@@ -17,6 +20,7 @@ from app.core.config import get_settings
 
 TEST_DATABASE = "sau_rag_test"
 MAINTENANCE_DATABASE = "postgres"
+ALEMBIC_INI = Path(__file__).resolve().parents[2] / "alembic.ini"
 
 
 def derive_test_url(app_url: URL) -> URL:
@@ -55,3 +59,17 @@ def test_database_url() -> str:
         pytest.exit(f"unsafe test database: {exc}", returncode=1)
     asyncio.run(_create_database_if_missing(app_url))
     return test_url.render_as_string(hide_password=False)
+
+
+def alembic_config(database_url: str) -> Config:
+    """Alembic config that targets `database_url` instead of the app database."""
+    config = Config(str(ALEMBIC_INI))
+    config.attributes["database_url"] = database_url
+    return config
+
+
+@pytest.fixture(scope="session")
+def migrated_database_url(test_database_url: str) -> str:
+    """The test database upgraded to the latest migration."""
+    command.upgrade(alembic_config(test_database_url), "head")
+    return test_database_url

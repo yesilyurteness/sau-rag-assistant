@@ -14,14 +14,15 @@ from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import create_async_engine
 
 from app.core.config import get_settings
+from app.storage.models import Base
 
 config = context.config
 if config.config_file_name is not None:
     # Keep the app's (structlog) loggers working when migrations run inside tests.
     fileConfig(config.config_file_name, disable_existing_loggers=False)
 
-# Set to the ORM metadata once tables exist (step 1b-2), so `--autogenerate` can compare.
-target_metadata = None
+# Used only to compare models with the hand-written migrations (`alembic check`).
+target_metadata = Base.metadata
 
 
 def _database_url() -> str:

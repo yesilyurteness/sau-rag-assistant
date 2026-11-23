@@ -1,24 +1,17 @@
 """Runs the migrations against the test database. Start Postgres first: `make up` (or CI)."""
 
 import asyncio
-from pathlib import Path
 
 import pytest
 from alembic import command
-from alembic.config import Config
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import create_async_engine
 
+from tests.integration.conftest import alembic_config
+
 pytestmark = pytest.mark.integration
 
-ALEMBIC_INI = Path(__file__).resolve().parents[2] / "alembic.ini"
 EXTENSIONS = {"vector", "pg_trgm"}
-
-
-def alembic_config(database_url: str) -> Config:
-    config = Config(str(ALEMBIC_INI))
-    config.attributes["database_url"] = database_url
-    return config
 
 
 def _installed_extensions(database_url: str) -> set[str]:
@@ -46,3 +39,9 @@ def test_upgrade_downgrade_upgrade_round_trip(test_database_url: str) -> None:
     # Leave the test database migrated for the tests that need tables.
     command.upgrade(config, "head")
     assert _installed_extensions(test_database_url) >= EXTENSIONS
+
+
+def test_models_match_the_migrations(migrated_database_url: str) -> None:
+    # `alembic check` runs the autogenerate comparison and raises if the ORM models
+    # (app.storage.models) describe anything the hand-written migrations did not create.
+    command.check(alembic_config(migrated_database_url))
