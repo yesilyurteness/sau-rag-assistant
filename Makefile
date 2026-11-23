@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: help install lint format typecheck test test-all check run up down logs validate-evals
+.PHONY: help install lint format typecheck test test-all check run up down logs validate-evals migrate
 
 help: ## Show available commands
 	@grep -E '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[36m%-16s\033[0m %s\n", $$1, $$2}'
@@ -29,6 +29,9 @@ validate-evals: ## Validate the golden evaluation datasets
 	uv run python -m evals.validate_dataset evals/datasets
 
 check: lint typecheck test validate-evals ## Everything CI runs
+
+migrate: ## Apply database migrations (needs postgres, e.g. `make up`)
+	uv run alembic upgrade head
 
 run: ## Run the API locally with auto-reload
 	uv run uvicorn app.main:app --reload --app-dir src

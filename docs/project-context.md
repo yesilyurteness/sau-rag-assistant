@@ -84,7 +84,24 @@ provider is chosen by configuration.
   cache directories, binaries and `.env`) and fails on BOM, U+200B-U+200D, U+2060, U+00AD,
   U+00A0, private-use and other Cf characters, naming file, line, column and code. Write such
   characters as `\uXXXX` escapes.
-- Next: step 1b (database schema). Split proposed, waiting for approval.
+- Step 1b split: 1b-1 Alembic, 1b-2 `documents`, 1b-3 `chunks`. Decisions:
+  - `academic_year` and `status` live only on `documents`; chunks reach them with a join.
+  - CSVs get a `documents` row (registry, hash, report) but no chunks; their rows go to SQL
+    tables in step 2.
+  - `source_name` is NFC-normalized before it is stored (Turkish file names);
+    `created_at` / `updated_at` are `timestamptz`; `academic_year` is checked as `YYYY-YYYY`
+    with the second year equal to the first plus one.
+  - No `kind` column yet; it comes with its own migration in 1c.
+  - Alembic needs no ADR: it is SQLAlchemy's standard migration tool and `init.sql` already
+    says Alembic manages the schema.
+  - Leaning for 1d (not decided): a manifest `config/sources.toml` gives each file its year,
+    status, kind and, when needed, skip plus reason; a file missing from the manifest is not
+    loaded and shows up as "unregistered" in the report.
+- Step 1b-1 done: Alembic with an async `migrations/env.py` that takes the URL from
+  `Settings`; migration `0001` enables `vector` and `pg_trgm` (CI's Postgres does not run
+  `init.sql`); `make migrate`. Offline unit tests (single head, rendered SQL) and an
+  integration round trip (upgrade, downgrade, upgrade) on real Postgres.
+- Next: step 1b-2 (`documents` table).
 
 ## Data
 
