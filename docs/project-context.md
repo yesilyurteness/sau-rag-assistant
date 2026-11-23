@@ -192,7 +192,16 @@ provider is chosen by configuration.
   1000/200 (v1) and 1500/200 (same size, so structure is the only difference).
 - Step 1d: design the report with info and warnings separated (for example "kept the table
   copy" is information, "word loss above 2%" is a warning).
-- Next: decide on heading-only chunks of empty sections, then step 1c-4c (next kind).
+- Heading-only sections (empty in the source: only the section heading, sub-headings or
+  table header cells) get no chunk; their number is reported as information. On the real
+  files: 18 sections skipped, 670 chunks, 13 chunks under 100 characters (11 short real
+  sections, 2 assessment tables with only "Toplam | 0" rows, which by the definition are a
+  row, not a heading).
+- Remaining kinds, one step each (short measurement, chunker and tests, real-file comparison
+  with the 1000/200 and 1500/200 baselines, stop; stop and ask before coding if the
+  measurement shows an unexpected structure): 1c-4c `faq`, 1c-4d `decision_list`, 1c-4e
+  `slides`, 1c-4f `narrative`.
+- Next: step 1c-4c (`faq`).
 
 ## Data
 

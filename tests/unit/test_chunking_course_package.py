@@ -4,6 +4,7 @@ from app.ingestion.chunking.course_package import (
     DEFAULT_SIZE,
     chunk_course_package,
     course_title,
+    is_heading_only,
     table_rows,
 )
 
@@ -194,3 +195,59 @@ def test_course_title_is_name_and_code() -> None:
 def test_course_title_is_none_without_the_identity_table() -> None:
     assert course_title("Dersin Amacı | Örnek") is None
     assert course_title("Ders Adı | Kodu | Yarıyıl\n | | 3") is None
+
+
+# --- sections that are empty in the source (decision after 1c-4b)
+
+EMPTY_SECTIONS = [
+    "Dersin Amacı |",
+    "Dersin İçeriği |",
+    *OUTCOMES_HEADER,
+    WEEKS_HEADER,
+    WEEKS_HEADER,  # the page-top repeat of an empty table
+    "Kaynaklar |",
+    "Ders Notu |",
+    "Kaynaklar |",
+    "Ders Kaynakları |",
+    "AKTS - İş Yükü Etkinlik | Sayı | Süre (Saat) | Toplam İş Yükü (Saat)",
+]
+
+
+def test_heading_only_sections_get_no_chunk_and_are_counted() -> None:
+    result = chunk_course_package(NL.join([*IDENTITY, *EMPTY_SECTIONS]))
+
+    assert [chunk.section for chunk in result.chunks] == ["Künye"]
+    assert result.warnings == ("skipped 6 sections that are empty in the source",)
+    assert [chunk.position for chunk in result.chunks] == [0]
+
+
+def test_short_sections_with_real_content_stay() -> None:
+    short = [
+        "Dersin Amacı | Ergonomi.",
+        "Dersin İçeriği | Ölçme ve birim sistemleri.",
+        "Kaynaklar |",
+        "Ders Notu | Ders notları",
+    ]
+
+    result = chunk_course_package(NL.join([*IDENTITY, *short]))
+
+    assert [chunk.section for chunk in result.chunks] == [
+        "Künye",
+        "Dersin Amacı",
+        "Dersin İçeriği",
+        "Kaynaklar",
+    ]
+    assert result.warnings == ()
+
+
+def test_a_zero_total_row_is_content_not_a_heading() -> None:
+    # Two real packages have an assessment table with only "Toplam | 0" rows. By the
+    # decision's definition (headings, sub-headings and table headers only) that is a row.
+    assessment = ["Değerlendirme Sistemi |", "Yarıyıl Çalışmaları | Katkı Oranı", "Toplam | 0"]
+
+    assert not is_heading_only("Değerlendirme Sistemi", assessment)
+    assert is_heading_only("Değerlendirme Sistemi", assessment[:2])
+
+
+def test_identity_is_never_heading_only() -> None:
+    assert not is_heading_only("Künye", IDENTITY)

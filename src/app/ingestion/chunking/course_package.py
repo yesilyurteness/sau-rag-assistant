@@ -38,6 +38,31 @@ SECTION_STARTS: tuple[tuple[str, str], ...] = (
 TABLES = frozenset({LEARNING_OUTCOMES, WEEKLY_TOPICS})
 NEVER_SPLIT = frozenset({WORKLOAD})
 
+# Heading cells of each section: the section heading, sub-headings and table column headers.
+# A section whose lines hold nothing else is empty in the source and gets no chunk.
+HEADING_CELLS: dict[str, frozenset[str]] = {
+    "Dersin Amacı": frozenset({"Dersin Amacı"}),
+    "Dersin İçeriği": frozenset({"Dersin İçeriği"}),
+    LEARNING_OUTCOMES: frozenset(
+        {
+            "#",
+            "Ders Öğrenme Çıktıları",
+            "Öğretim Yöntemleri",
+            "Ölçme",
+            "Yöntemleri",
+            "Ölçme Yöntemleri",
+        }
+    ),
+    WEEKLY_TOPICS: frozenset({"Hafta", "Ders Konuları", "Ön Hazırlık"}),
+    "Kaynaklar": frozenset({"Kaynaklar", "Ders Notu", "Ders Kaynakları"}),
+    "Değerlendirme Sistemi": frozenset(
+        {"Değerlendirme Sistemi", "Yarıyıl Çalışmaları", "Katkı Oranı"}
+    ),
+    WORKLOAD: frozenset(
+        {"AKTS - İş Yükü Etkinlik", "Sayı", "Süre (Saat)", "Toplam İş Yükü (Saat)"}
+    ),
+}
+
 _TABLE_ROW = re.compile(r"^\d+ \|")
 _IDENTITY_HEADER = "Ders Adı | Kodu"
 
@@ -92,6 +117,13 @@ def _pack(rows: list[str], size: int, repeat_header: bool) -> list[str]:
     return ["\n".join(chunk) for chunk in chunks]
 
 
+def is_heading_only(name: str, lines: list[str]) -> bool:
+    """True when every non-empty cell of the section is one of its heading cells."""
+    headings = HEADING_CELLS.get(name, frozenset())
+    cells = (cell.strip() for line in lines for cell in line.split("|"))
+    return all(cell in headings for cell in cells if cell)
+
+
 def chunk_section(name: str, lines: list[str], size: int) -> tuple[list[str], list[str]]:
     """Chunk texts for one section, and warnings."""
     rows = table_rows(lines) if name in TABLES else list(lines)
@@ -113,11 +145,17 @@ def chunk_course_package(text: str, size: int = DEFAULT_SIZE) -> ChunkingResult:
     """Chunks for one cleaned course package; `page` is None (the source is TXT)."""
     chunks: list[TextChunk] = []
     warnings: list[str] = []
+    empty_sections = 0
     for name, lines in split_sections(text):
+        if is_heading_only(name, lines):
+            empty_sections += 1
+            continue
         texts, section_warnings = chunk_section(name, lines, size)
         warnings += section_warnings
         for chunk_text in texts:
             chunks.append(TextChunk(text=chunk_text, position=len(chunks), section=name))
+    if empty_sections:
+        warnings.append(f"skipped {empty_sections} sections that are empty in the source")
     return ChunkingResult(tuple(chunks), tuple(warnings))
 
 
